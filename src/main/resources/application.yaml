@@ -1,0 +1,32 @@
+server:
+  port: ${SERVER_PORT:8080}
+  servlet:
+    context-path: /movie_theater
+
+spring:
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/movie_theater}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+  flyway:
+    enabled: ${FLYWAY_ENABLED:true}
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    schemas: movie_theater
+    table: flyway_schema_history
+  jpa:
+    show-sql: ${JPA_SHOW_SQL:false}
+    hibernate:
+      ddl-auto: ${JPA_DDL_AUTO:validate}
+    properties:
+      hibernate:
+        default_schema: movie_theater
+
+jwt:
+  signerKey: ${JWT_SIGNER_KEY:CHANGE_ME}
+  valid-duration: ${JWT_VALID_DURATION:36000}
+  refreshable-duration: ${JWT_REFRESHABLE_DURATION:360000}
+
+springdoc:
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
