@@ -1,4 +1,4 @@
-SET search_path TO movie_theater;
+SET search_path TO unihome;
 
 CREATE TABLE refresh_token (
   id VARCHAR(36) PRIMARY KEY,
@@ -9,7 +9,7 @@ CREATE TABLE refresh_token (
   revoked_at TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES "user"(id)
+  CONSTRAINT fk_refresh_token_user FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
 CREATE INDEX idx_refresh_token_user_id ON refresh_token(user_id);

@@ -4,12 +4,11 @@ server:
     context-path: /unihome
 
 spring:
-  config:
-    import: optional:file:.env[.properties]
+
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password:
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
     baseline-on-migrate: true
@@ -23,17 +22,8 @@ spring:
     properties:
       hibernate:
         default_schema: unihome
-  security:
-    oauth2:
-      client:
-        registration:
-          google:
-            client-id: ${GOOGLE_CLIENT_ID:YOUR_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET:YOUR-SECRET}
-            scope: openid,profile,email
-
 jwt:
-  signerKey: ${JWT_SIGNER_KEY:YOUR_JWT_KEY}
+  signerKey: ${JWT_SIGNER_KEY:6a1cb621034ba5799fcab51bf3abd3aed423bbea68d559782c02a7f4954cf3556fae79dba9ca362109de89dd4604660f52e9fe73cf7719a69e2ab5d06eba71ba}
   valid-duration: ${JWT_VALID_DURATION:36000}
   refreshable-duration: ${JWT_REFRESHABLE_DURATION:360000}
 

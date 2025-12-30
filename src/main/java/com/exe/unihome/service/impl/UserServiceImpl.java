@@ -36,7 +36,7 @@ public class UserServiceImpl implements UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .status(Status.ACTIVE)
-                .role(RoleName.MEMBER)
+                .role(RoleName.CUSTOMER)
                 .build();
         return userMapper.toResponse(userRepository.save(user));
     }
@@ -60,7 +60,7 @@ public class UserServiceImpl implements UserService {
                 .email(email)
                 .password(passwordEncoder.encode(UUID.randomUUID().toString()))
                 .status(Status.ACTIVE)
-                .role(RoleName.MEMBER)
+                .role(RoleName.CUSTOMER)
                 .build();
         return userRepository.save(user);
     }
