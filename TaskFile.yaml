@@ -1,0 +1,14 @@
+version: '3'
+
+tasks:
+  run:
+    desc: Run app (local)
+    cmds:
+      - mvn spring-boot:run
+
+  test:
+    desc: Run tests
+    env:
+      SPRING_PROFILES_ACTIVE: test
+    cmds:
+      - mvn test

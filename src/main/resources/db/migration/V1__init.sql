@@ -1,5 +1,5 @@
-CREATE SCHEMA IF NOT EXISTS movie_theater;
-SET search_path TO movie_theater;
+CREATE SCHEMA IF NOT EXISTS unihome;
+SET search_path TO unihome;
 
 CREATE TABLE role (
   name VARCHAR(50) PRIMARY KEY,
@@ -8,11 +8,11 @@ CREATE TABLE role (
 
 INSERT INTO role (name, description) VALUES
   ('ADMIN', 'System administrator'),
-  ('MANAGER', 'Cinema manager'),
-  ('MEMBER', 'Registered member'),
-  ('STAFF', 'Cinema staff');
+  ('CUSTOMER', 'Customer'),
+  ('SHIPPER', 'Shipper'),
+  ('STAFF', 'Staff');
 
-CREATE TABLE "user" (
+CREATE TABLE users (
   id VARCHAR(36) PRIMARY KEY,
   full_name VARCHAR(255) NOT NULL,
   email VARCHAR(255) NOT NULL UNIQUE,

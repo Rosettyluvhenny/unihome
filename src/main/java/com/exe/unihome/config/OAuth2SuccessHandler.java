@@ -11,6 +11,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseCookie;
@@ -25,6 +26,7 @@ import java.time.Duration;
 
 @Component
 @RequiredArgsConstructor
+@Profile({"!test"})
 public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     private final UserService userService;
     private final AuthTokenService authTokenService;
