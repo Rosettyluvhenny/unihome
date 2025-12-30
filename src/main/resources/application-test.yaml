@@ -7,6 +7,7 @@ spring:
 
   datasource:
     url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
     username: sa
     password:
   flyway:
@@ -18,7 +19,7 @@ spring:
   jpa:
     show-sql: ${JPA_SHOW_SQL:false}
     hibernate:
-      ddl-auto: ${JPA_DDL_AUTO:validate}
+      ddl-auto: ${JPA_DDL_AUTO:create-drop}
     properties:
       hibernate:
         default_schema: unihome

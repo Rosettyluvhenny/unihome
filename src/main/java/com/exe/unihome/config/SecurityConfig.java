@@ -1,6 +1,7 @@
 package com.exe.unihome.config;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -17,9 +18,8 @@ import org.springframework.security.web.SecurityFilterChain;
 
 @Configuration
 @RequiredArgsConstructor
-@Profile({"local", "staging", "prod"})
 public class SecurityConfig {
-    private final OAuth2SuccessHandler oAuth2SuccessHandler;
+    private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
 
 
     @Bean
@@ -42,9 +42,14 @@ public class SecurityConfig {
                                 "/swagger-ui/**")
                         .permitAll()
                         .anyRequest().authenticated())
-                .oauth2Login(oauth2 -> oauth2
-                        .userInfoEndpoint(userInfo -> userInfo.userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) oauth2UserService()))
-                        .successHandler(oAuth2SuccessHandler))
+                .oauth2Login(oauth2 -> {
+                  oauth2
+                    .userInfoEndpoint(userInfo ->
+                        userInfo.userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) oauth2UserService()));
+                  OAuth2SuccessHandler oAuth2SuccessHandler = oAuth2SuccessHandlerProvider.getIfAvailable();
+                  if(oAuth2SuccessHandler!=null)
+                    oauth2.successHandler(oAuth2SuccessHandler);
+                })
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }

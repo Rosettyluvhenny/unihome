@@ -104,7 +104,11 @@
 			<version>2.4.240</version>
 			<scope>test</scope>
 		</dependency>
-	</dependencies>
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+    </dependency>
+  </dependencies>
 
 	<build>
 		<plugins>
