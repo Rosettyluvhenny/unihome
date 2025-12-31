@@ -1,8 +1,10 @@
 version: '3'
 
 tasks:
-  run:
+  run-local:
     desc: Run app (local)
+    env:
+      SPRING_PROFILES_ACTIVE: dev
     cmds:
       - mvn spring-boot:run
 
