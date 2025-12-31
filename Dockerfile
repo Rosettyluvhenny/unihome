@@ -6,14 +6,12 @@ RUN apk add --no-cache ca-certificates
 
 # Cache Maven deps
 COPY pom.xml .
-RUN --mount=type=cache,id=unihome-backend-maven,target=/root/.m2 \
-    mvn -B -q -DskipTests dependency:go-offline
+RUN mvn -B -q -DskipTests dependency:go-offline
 
 # Copy source
 COPY src ./src
 
-RUN --mount=type=cache,id=unihome-backend-maven,target=/root/.m2 \
-    mvn -B -DskipTests package
+RUN mvn -B -DskipTests package
 
 
 # RUNTIME STAGE
