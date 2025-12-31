@@ -15,6 +15,11 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
@@ -53,4 +58,28 @@ public class SecurityConfig {
                 .httpBasic(Customizer.withDefaults());
         return http.build();
     }
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
+
+    config.setAllowedOrigins(List.of(
+      "http://localhost:3000",          // React local
+      "http://localhost:5173",          // Vite local (nếu dùng)
+      "https://*.up.railway.app"        // Swagger + prod
+    ));
+
+    config.setAllowedMethods(List.of(
+      "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+    ));
+
+    config.setAllowedHeaders(List.of("*"));
+
+    // ❗ Swagger + JWT + OAuth2 → PHẢI false nếu origins dùng wildcard
+    config.setAllowCredentials(false);
+
+    UrlBasedCorsConfigurationSource source =
+      new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
 }
