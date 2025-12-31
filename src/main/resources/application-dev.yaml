@@ -5,9 +5,9 @@ server:
 
 spring:
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME:sa}
-    password: ${DB_PASSWORD:}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/unihome}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
     baseline-on-migrate: true
@@ -26,12 +26,12 @@ spring:
       client:
         registration:
           google:
-            client-id: ${GOOGLE_CLIENT_ID:YOUR_ID}
-            client-secret: ${GOOGLE_CLIENT_SECRET:YOUR-SECRET}
+            client-id: ${GOOGLE_CLIENT_ID:723311125807-f8620lu6dg8j0ofjjlcukrhi22iq7g8c.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET: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}
             scope: openid,profile,email
 
 jwt:
-  signerKey: ${JWT_SIGNER_KEY:YOUR_JWT_KEY}
+  signerKey: ${JWT_SIGNER_KEY:6a1cb621034ba5799fcab51bf3abd3aed423bbea68d559782c02a7f4954cf3556fae79dba9ca362109de89dd4604660f52e9fe73cf7719a69e2ab5d06eba71ba}
   valid-duration: ${JWT_VALID_DURATION:36000}
   refreshable-duration: ${JWT_REFRESHABLE_DURATION:360000}
 

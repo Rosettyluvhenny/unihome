@@ -30,3 +30,9 @@ jobs:
           SPRING_PROFILES_ACTIVE: test
           FLYWAY_ENABLED: true
         run: mvn -B test
+
+      # 4️⃣ Build JAR
+      - name: Build JAR
+        run: mvn -B clean package -DskipTests
+
+
