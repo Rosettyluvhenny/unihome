@@ -391,7 +391,7 @@ class AuthenticationControllerTest {
     // Act & Assert
     mockMvc.perform(get("/auth/google"))
       .andExpect(status().isFound())
-      .andExpect(MockMvcResultMatchers.redirectedUrl("/movie_theater/oauth2/authorization/google"));
+      .andExpect(MockMvcResultMatchers.redirectedUrl("/unihome/oauth2/authorization/google"));
   }
 
   @Test

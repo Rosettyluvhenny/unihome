@@ -63,7 +63,7 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
       .httpOnly(true)
       .secure(true)
       .sameSite("Strict")
-      .path("/movie_theater/auth/refresh")
+      .path("/unihome/auth/refresh")
       .maxAge(Duration.ofSeconds(jwtProperties.getRefreshableDuration()))
       .build();
 
