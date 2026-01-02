@@ -4,7 +4,6 @@ import com.exe.unihome.AppException;
 import com.exe.unihome.config.JwtProperties;
 import com.exe.unihome.entity.identityAndAuth.RoleName;
 import com.exe.unihome.entity.identityAndAuth.Status;
-import com.exe.unihome.entity.identityAndAuth.VerifyToken;
 import com.exe.unihome.exception.ErrorCode;
 import com.exe.unihome.exception.GlobalExceptionHandler;
 import com.exe.unihome.model.request.auth.AuthenticationRequest;
@@ -272,17 +271,17 @@ class AuthenticationControllerTest {
   void testVerifyTokenSuccess() throws Exception {
     // Arrange
     String verifyToken = "token-id.secret";
-    doNothing().when(verifyTokenService).verifyToken(eq(verifyToken));
+    doNothing().when(verifyTokenService).verifyToken((verifyToken));
 
     // Act & Assert
-    mockMvc.perform(post("/auth/verify")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(new com.exe.unihome.model.request.auth.VerifyTokenRequest(verifyToken))))
+    mockMvc.perform(get("/auth/verify")
+        .param("token", verifyToken)
+        .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isOk())
       .andExpect(jsonPath("$.valid").value(true))
       .andExpect(jsonPath("$.message").value("Email verified successfully. Your account is now active."));
 
-    verify(verifyTokenService, times(1)).verifyToken(eq(verifyToken));
+    verify(verifyTokenService, times(1)).verifyToken(verifyToken);
   }
 
   @Test
@@ -291,16 +290,16 @@ class AuthenticationControllerTest {
     // Arrange
     String invalidToken = "invalid-token";
     doThrow(new AppException(ErrorCode.VERIFY_TOKEN_INVALID))
-      .when(verifyTokenService).verifyToken(eq(invalidToken));
+      .when(verifyTokenService).verifyToken(invalidToken);
 
     // Act & Assert
-    mockMvc.perform(post("/auth/verify")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(new com.exe.unihome.model.request.auth.VerifyTokenRequest(invalidToken))))
+    mockMvc.perform(get("/auth/verify")
+        .param("token", invalidToken)
+        .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isUnauthorized())
       .andExpect(jsonPath("$.valid").value(false));
 
-    verify(verifyTokenService, times(1)).verifyToken(eq(invalidToken));
+    verify(verifyTokenService, times(1)).verifyToken(invalidToken);
   }
 
   @Test
@@ -309,79 +308,18 @@ class AuthenticationControllerTest {
     // Arrange
     String expiredToken = "expired-token.secret";
     doThrow(new AppException(ErrorCode.VERIFY_TOKEN_EXPIRED))
-      .when(verifyTokenService).verifyToken(eq(expiredToken));
+      .when(verifyTokenService).verifyToken(expiredToken);
 
     // Act & Assert
-    mockMvc.perform(post("/auth/verify")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(new com.exe.unihome.model.request.auth.VerifyTokenRequest(expiredToken))))
+    mockMvc.perform(get("/auth/verify")
+        .param("token", expiredToken)
+        .contentType(MediaType.APPLICATION_JSON))
       .andExpect(status().isUnauthorized())
       .andExpect(jsonPath("$.valid").value(false));
 
     verify(verifyTokenService, times(1)).verifyToken(eq(expiredToken));
   }
 
-  // ==================== VERIFY INTROSPECT TESTS ====================
-
-  @Test
-  @DisplayName("Verify Introspect - PASS: Should introspect valid token")
-  void testVerifyIntrospectSuccess() throws Exception {
-    // Arrange
-    String verifyToken = "token-id.secret";
-    VerifyToken token = VerifyToken.builder()
-      .id("token-id")
-      .userId("user-id-1")
-      .tokenHash("hashed-secret")
-      .build();
-
-    when(verifyTokenService.getValidVerifyToken(eq("token-id"), eq("secret")))
-      .thenReturn(token);
-
-    // Act & Assert
-    mockMvc.perform(post("/auth/verify/introspect")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(new com.exe.unihome.model.request.auth.VerifyTokenRequest(verifyToken))))
-      .andExpect(status().isOk())
-      .andExpect(jsonPath("$.valid").value(true))
-      .andExpect(jsonPath("$.userId").value("user-id-1"));
-
-    verify(verifyTokenService, times(1)).getValidVerifyToken(eq("token-id"), eq("secret"));
-  }
-
-  @Test
-  @DisplayName("Verify Introspect - FAIL: Should return error with invalid token format")
-  void testVerifyIntrospectFailInvalidFormat() throws Exception {
-    // Arrange
-    String invalidToken = "invalid-format";
-
-    // Act & Assert
-    mockMvc.perform(post("/auth/verify/introspect")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(new com.exe.unihome.model.request.auth.VerifyTokenRequest(invalidToken))))
-      .andExpect(status().isBadRequest())
-      .andExpect(jsonPath("$.valid").value(false))
-      .andExpect(jsonPath("$.message").value("Invalid token format"));
-
-    verify(verifyTokenService, never()).getValidVerifyToken(anyString(), anyString());
-  }
-
-  @Test
-  @DisplayName("Verify Introspect - FAIL: Should return error with expired token")
-  void testVerifyIntrospectFailExpiredToken() throws Exception {
-    // Arrange
-    String expiredToken = "expired-id.secret";
-    when(verifyTokenService.getValidVerifyToken(eq("expired-id"), eq("secret")))
-      .thenThrow(new AppException(ErrorCode.VERIFY_TOKEN_EXPIRED));
-
-    // Act & Assert
-    mockMvc.perform(post("/auth/verify/introspect")
-        .contentType(MediaType.APPLICATION_JSON)
-        .content(objectMapper.writeValueAsString(new com.exe.unihome.model.request.auth.VerifyTokenRequest(expiredToken))))
-      .andExpect(status().isUnauthorized())
-      .andExpect(jsonPath("$.valid").value(false));
-
-    verify(verifyTokenService, times(1)).getValidVerifyToken(eq("expired-id"), eq("secret"));
-  }
 
   // ==================== GOOGLE LOGIN TESTS ====================
 

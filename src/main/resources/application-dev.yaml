@@ -10,14 +10,14 @@ spring:
     password: ${DB_PASSWORD:postgres}
   data:
     redis:
-      #      host: ${REDIS_HOST:localhost}
-      #      port: ${REDIS_PORT:6379}
-      #      password: ${REDIS_PASSWORD:12345}
-      #      timeout: 5s
-      host: ${REDIS_HOST:redis-19053.c252.ap-southeast-1-1.ec2.cloud.redislabs.com}
-      port: ${REDIS_PORT:19053}
-      password: ${REDIS_PASSWORD:FLA8lunuAdoznwkrsda9AZn7qtUkFYc4}
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:12345}
       timeout: 5s
+  #      host: ${REDIS_HOST:redis-19053.c252.ap-southeast-1-1.ec2.cloud.redislabs.com}
+  #      port: ${REDIS_PORT:19053}
+  #      password: ${REDIS_PASSWORD:FLA8lunuAdoznwkrsda9AZn7qtUkFYc4}
+  #      timeout: 5s
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
