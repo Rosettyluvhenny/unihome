@@ -8,6 +8,27 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/unihome}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:12345}
+      timeout: 5s
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:rosettyluvhenny@gmail.com}
+    password: ${MAIL_PASSWORD:abil fxeb hagz wvwi}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
   flyway:
     enabled: ${FLYWAY_ENABLED:true}
     baseline-on-migrate: true

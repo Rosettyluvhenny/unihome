@@ -3,24 +3,24 @@ package com.exe.unihome.controller;
 import com.exe.unihome.config.JwtProperties;
 import com.exe.unihome.model.request.auth.AuthenticationRequest;
 import com.exe.unihome.model.request.auth.RegistrationRequest;
+import com.exe.unihome.model.request.auth.VerifyTokenRequest;
 import com.exe.unihome.model.response.ApiResponse;
-import com.exe.unihome.model.response.UserResponse;
+import com.exe.unihome.model.response.auth.RegistrationResponse;
 import com.exe.unihome.model.response.auth.AuthenticationResponse;
+import com.exe.unihome.model.response.auth.VerifyTokenResponse;
 import com.exe.unihome.service.AuthResult;
 import com.exe.unihome.service.AuthenticationService;
 import com.exe.unihome.service.UserService;
+import com.exe.unihome.service.VerifyTokenService;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CookieValue;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Duration;
 @RestController
@@ -29,10 +29,11 @@ import java.time.Duration;
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
     private final UserService userService;
+    private final VerifyTokenService verifyTokenService;
     private final JwtProperties jwtProperties;
 
     @PostMapping("/register")
-    public ResponseEntity<UserResponse> register(@Valid @RequestBody RegistrationRequest request) {
+    public ResponseEntity<RegistrationResponse> register(@Valid @RequestBody RegistrationRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(userService.register(request));
     }
@@ -56,6 +57,23 @@ public class AuthenticationController {
                 .body(result.response());
     }
 
+    @GetMapping("/verify")
+    public ResponseEntity<VerifyTokenResponse> verifyToken(@NotBlank @RequestParam String token) {
+        try {
+            verifyTokenService.verifyToken(token);
+            return ResponseEntity.ok(VerifyTokenResponse.builder()
+                    .valid(true)
+                    .message("Email verified successfully. Your account is now active.")
+                    .build());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                    .body(VerifyTokenResponse.builder()
+                            .valid(false)
+                            .message("Verification failed: " + e.getMessage())
+                            .build());
+        }
+    }
+
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<Void>> logout(
             @CookieValue(value = "refresh_token", required = false) String refreshToken) {
@@ -64,7 +82,7 @@ public class AuthenticationController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/movie_theater/auth/refresh")
+                .path("/unihome/auth/refresh")
                 .maxAge(Duration.ZERO)
                 .build();
         return ResponseEntity.ok()
@@ -78,7 +96,7 @@ public class AuthenticationController {
     @GetMapping("/google")
     public ResponseEntity<Void> googleLogin() {
         return ResponseEntity.status(HttpStatus.FOUND)
-                .header(HttpHeaders.LOCATION, "/movie_theater/oauth2/authorization/google")
+                .header(HttpHeaders.LOCATION, "/unihome/oauth2/authorization/google")
                 .build();
     }
 
@@ -87,7 +105,7 @@ public class AuthenticationController {
                 .httpOnly(true)
                 .secure(true)
                 .sameSite("Strict")
-                .path("/movie_theater/auth/refresh")
+                .path("/unihome/auth/refresh")
                 .maxAge(Duration.ofSeconds(jwtProperties.getRefreshableDuration()))
                 .build();
     }
