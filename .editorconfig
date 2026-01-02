@@ -54,5 +54,6 @@ indent_style = space
 indent_size = 4
 
 # Go files (if you have any)
-[*.go]
+[*.sql]
 indent_style = tab
+indent_size = 2
