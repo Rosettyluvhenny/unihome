@@ -1,6 +1,6 @@
 package com.exe.unihome.handler;
 
-import com.exe.unihome.session.SessionRegistry;
+import com.exe.unihome.websocket.session.SessionRegistry;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

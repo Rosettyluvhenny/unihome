@@ -1,11 +1,11 @@
 package com.exe.unihome.config;
 
-import com.exe.unihome.entity.identityAndAuth.User;
-import com.exe.unihome.exception.ErrorCode;
-import com.exe.unihome.model.response.ApiResponse;
-import com.exe.unihome.service.AuthResult;
-import com.exe.unihome.service.AuthTokenService;
-import com.exe.unihome.service.UserService;
+import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.common.model.ApiResponse;
+import com.exe.unihome.auth.model.AuthResult;
+import com.exe.unihome.persistence.entity.identityAndAuth.User;
+import com.exe.unihome.auth.service.AuthTokenService;
+import com.exe.unihome.auth.service.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
