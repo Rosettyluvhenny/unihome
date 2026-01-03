@@ -80,7 +80,7 @@ public class MailWorker {
 
       } catch (RedisConnectionFailureException e) {
         log.warn("[MailWorker] redis unavailable, stopping worker");
-        break; // ❗ rất quan trọng
+        break; //
       } catch (Exception e) {
         log.error("[MailWorker] unexpected error", e);
       }
