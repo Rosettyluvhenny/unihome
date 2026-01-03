@@ -42,7 +42,8 @@ public class SecurityConfig {
           "/actuator/**",
           "/v3/api-docs/**",
           "/redis-test/**",
-          "/swagger-ui/**")
+          "/swagger-ui/**",
+          "/ws/**")
         .permitAll()
         .anyRequest().authenticated())
       .oauth2Login(oauth2 -> {
