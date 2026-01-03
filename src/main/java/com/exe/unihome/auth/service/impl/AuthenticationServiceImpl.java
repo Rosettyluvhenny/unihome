@@ -1,13 +1,13 @@
 package com.exe.unihome.auth.service.impl;
 
-import com.exe.unihome.common.exception.AppException;
-import com.exe.unihome.common.exception.ErrorCode;
-import com.exe.unihome.auth.model.AuthenticationRequest;
 import com.exe.unihome.auth.model.AuthResult;
-import com.exe.unihome.persistence.entity.identityAndAuth.User;
-import com.exe.unihome.persistence.repository.UserRepository;
+import com.exe.unihome.auth.model.AuthenticationRequest;
 import com.exe.unihome.auth.service.AuthTokenService;
 import com.exe.unihome.auth.service.AuthenticationService;
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.persistence.entity.identityAndAuth.User;
+import com.exe.unihome.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,4 +40,13 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   public void logout(String refreshTokenCookie) {
     authTokenService.revoke(refreshTokenCookie);
   }
+
+  public boolean verifyToken(String token) {
+    try {
+      return authTokenService.verifyToken(token);
+    } catch (Exception e) {
+      throw new AppException(ErrorCode.TOKEN_PARSE_ERROR);
+    }
+  }
+
 }

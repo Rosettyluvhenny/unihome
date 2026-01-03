@@ -82,7 +82,7 @@ public class MailWorker {
         log.warn("[MailWorker] redis unavailable, stopping worker");
         break; //
       } catch (Exception e) {
-        log.error("[MailWorker] unexpected error", e);
+        log.error("[MailWorker] time out");
       }
     }
 

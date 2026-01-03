@@ -1,16 +1,14 @@
 package com.exe.unihome.auth.controller;
 
-import com.exe.unihome.config.JwtProperties;
-import com.exe.unihome.auth.model.AuthenticationRequest;
-import com.exe.unihome.auth.model.RegistrationRequest;
-import com.exe.unihome.common.model.ApiResponse;
-import com.exe.unihome.auth.model.AuthResult;
-import com.exe.unihome.auth.model.AuthenticationResponse;
-import com.exe.unihome.auth.model.RegistrationResponse;
+import com.exe.unihome.auth.jwt.IntrospectTokenResponse;
+import com.exe.unihome.auth.jwt.JwtUtil;
 import com.exe.unihome.auth.jwt.VerifyTokenResponse;
+import com.exe.unihome.auth.model.*;
 import com.exe.unihome.auth.service.AuthenticationService;
 import com.exe.unihome.auth.service.UserService;
 import com.exe.unihome.auth.service.VerifyTokenService;
+import com.exe.unihome.common.model.ApiResponse;
+import com.exe.unihome.config.JwtProperties;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +27,7 @@ public class AuthenticationController {
   private final AuthenticationService authenticationService;
   private final UserService userService;
   private final VerifyTokenService verifyTokenService;
+  private final JwtUtil jwtUtil;
   private final JwtProperties jwtProperties;
 
   @PostMapping("/register")
@@ -97,6 +96,17 @@ public class AuthenticationController {
     return ResponseEntity.status(HttpStatus.FOUND)
       .header(HttpHeaders.LOCATION, "/unihome/oauth2/authorization/google")
       .build();
+  }
+
+  @PostMapping("/introspect")
+  public ResponseEntity<IntrospectTokenResponse> introspectToken(
+    @RequestBody IntrospectRequest request) {
+
+    boolean check = authenticationService.verifyToken(request.getToken());
+
+    return ResponseEntity.ok(IntrospectTokenResponse.builder()
+      .valid(check)
+      .build());
   }
 
   private ResponseCookie buildRefreshCookie(String refreshToken) {

@@ -1,4 +1,4 @@
-package com.exe.unihome.handler;
+package com.exe.unihome.websocket.handler;
 
 import com.exe.unihome.websocket.session.SessionRegistry;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +18,8 @@ public class AppWebSocketHandler extends TextWebSocketHandler {
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) {
-    sessionRegistry.register(session);
+    String userId = getUserId(session);
+    sessionRegistry.register(userId, session);
     log.info("CONNECTED: {}| total={}",
       session.getId(), sessionRegistry.size());
   }
@@ -38,8 +39,21 @@ public class AppWebSocketHandler extends TextWebSocketHandler {
   @Override
   public void afterConnectionClosed(WebSocketSession session,
                                     CloseStatus status) {
-    sessionRegistry.remove(session.getId());
+    String userId = getUserId(session);
+    sessionRegistry.remove(userId, session);
     log.info("DISCONNECTED: {} | reason={}  | total={}",
       session.getId(), status.getReason(), sessionRegistry.size());
+  }
+
+  private String getUserId(WebSocketSession session) {
+    String query = session.getUri().getQuery();
+    if (query == null) return "anonymous";
+
+    for (String part : query.split("&")) {
+      if (part.startsWith("userId=")) {
+        return part.substring("userId=".length());
+      }
+    }
+    return "anonymous";
   }
 }

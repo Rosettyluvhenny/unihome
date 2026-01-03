@@ -1,26 +1,29 @@
 package com.exe.unihome.auth.service.impl;
 
+import com.exe.unihome.auth.model.AuthResult;
+import com.exe.unihome.auth.model.AuthenticationResponse;
+import com.exe.unihome.auth.service.AuthTokenService;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.config.JwtProperties;
-import com.exe.unihome.auth.model.AuthResult;
-import com.exe.unihome.auth.model.AuthenticationResponse;
 import com.exe.unihome.persistence.entity.identityAndAuth.RefreshToken;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.repository.RefreshTokenRepository;
 import com.exe.unihome.persistence.repository.UserRepository;
-import com.exe.unihome.auth.service.AuthTokenService;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
-import io.jsonwebtoken.security.Keys;
+import com.nimbusds.jose.*;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jose.crypto.MACVerifier;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
+import java.text.ParseException;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -45,6 +48,7 @@ public class AuthTokenServiceImpl implements AuthTokenService {
       .build();
     return new AuthResult(response, refreshTokenResult.rawToken());
   }
+
 
   @Override
   public AuthResult refreshTokens(String refreshTokenCookie) {
@@ -80,18 +84,39 @@ public class AuthTokenServiceImpl implements AuthTokenService {
   }
 
   private String generateAccessToken(User user) {
-    LocalDateTime now = LocalDateTime.now();
-    Date issuedAt = Date.from(now.atZone(java.time.ZoneId.systemDefault()).toInstant());
-    Date expiryDate = Date.from(now.plusSeconds(jwtProperties.getValidDuration())
-      .atZone(java.time.ZoneId.systemDefault()).toInstant());
+    try {
+      // Create JWS Header
+      JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
-    return Jwts.builder()
-      .setSubject(user.getId())
-      .claim("role", user.getRole().name())
-      .setIssuedAt(issuedAt)
-      .setExpiration(expiryDate)
-      .signWith(getSigningKey(), SignatureAlgorithm.HS512)
-      .compact();
+      // Create JWT Claims
+      JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+        .subject(user.getEmail())
+        .issuer("exe2.com")
+        .issueTime(Date.from(Instant.now()))
+        .expirationTime(new Date(Instant.now().plus(getValidDuration(), ChronoUnit.SECONDS).toEpochMilli()))
+        .jwtID(UUID.randomUUID().toString())
+        .claim("role", user.getRole())
+        .claim("userId", user.getId())
+        .build();
+
+      // Create Payload
+      Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+
+      // Create JWS Object
+      JWSObject jwsObject = new JWSObject(header, payload);
+
+      // Sign the JWS object using HMAC-SHA512
+      jwsObject.sign(new MACSigner((getSigningKey())));
+
+      // Serialize to compact form
+      return jwsObject.serialize();
+    } catch (JOSEException ex) {
+      throw new AppException(ErrorCode.TOKEN_PARSE_ERROR);
+    }
+  }
+
+  private long getValidDuration() {
+    return jwtProperties.getValidDuration();
   }
 
   private RefreshTokenResult issueRefreshToken(String userId) {
@@ -136,8 +161,17 @@ public class AuthTokenServiceImpl implements AuthTokenService {
     return new TokenParts(parts[0], parts[1]);
   }
 
-  private Key getSigningKey() {
-    return Keys.hmacShaKeyFor(jwtProperties.getSignerKey().getBytes(StandardCharsets.UTF_8));
+  @Override
+  public boolean verifyToken(String token) throws JOSEException, ParseException {
+    JWSVerifier verifier = new MACVerifier(getSigningKey().getBytes());
+
+    SignedJWT signedJWT = SignedJWT.parse(token);
+
+    return signedJWT.verify(verifier);
+  }
+
+  private String getSigningKey() {
+    return jwtProperties.getSignerKey();
   }
 
   private record TokenParts(String id, String secret) {

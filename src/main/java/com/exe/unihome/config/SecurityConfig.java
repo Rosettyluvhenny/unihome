@@ -1,5 +1,6 @@
 package com.exe.unihome.config;
 
+import com.exe.unihome.auth.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
@@ -12,6 +13,7 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -22,6 +24,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class SecurityConfig {
   private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
   @Bean
   public OAuth2UserService<?, OAuth2User> oauth2UserService() {
@@ -54,6 +57,7 @@ public class SecurityConfig {
         if (oAuth2SuccessHandler != null)
           oauth2.successHandler(oAuth2SuccessHandler);
       })
+      .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
       .httpBasic(Customizer.withDefaults());
     return http.build();
   }

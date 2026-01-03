@@ -16,8 +16,11 @@ public enum ErrorCode {
   VERIFY_TOKEN_INVALID(1007, "Verify token is invalid", HttpStatus.UNAUTHORIZED),
   VERIFY_TOKEN_EXPIRED(1008, "Verify token is expired", HttpStatus.UNAUTHORIZED),
   FAIL_MAIL_ENQUEUED(1009, "Failed to enqueue mail job", HttpStatus.BAD_REQUEST),
-  FAIL_MAIL_RETRY(10010, "Failed to retry mail job", HttpStatus.BAD_REQUEST),
-  UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR);
+  FAIL_MAIL_RETRY(1010, "Failed to retry mail job", HttpStatus.BAD_REQUEST),
+  UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
+  INVALID_TOKEN(1011, "Invalid token", HttpStatus.UNAUTHORIZED),
+  TOKEN_PARSE_ERROR(1012, "PARSE TOKEN FAILED", HttpStatus.BAD_REQUEST),
+  ;
 
   private final int code;
   private final String message;
