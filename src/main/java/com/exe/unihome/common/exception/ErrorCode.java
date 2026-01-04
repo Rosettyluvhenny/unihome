@@ -20,6 +20,7 @@ public enum ErrorCode {
   UNCATEGORIZED_EXCEPTION(9999, "Uncategorized error", HttpStatus.INTERNAL_SERVER_ERROR),
   INVALID_TOKEN(1011, "Invalid token", HttpStatus.UNAUTHORIZED),
   TOKEN_PARSE_ERROR(1012, "PARSE TOKEN FAILED", HttpStatus.BAD_REQUEST),
+  UNAUTHORIZED(1013, "Unauthorized", HttpStatus.UNAUTHORIZED),
   ;
 
   private final int code;
