@@ -20,8 +20,8 @@ public class AppWebSocketHandler extends TextWebSocketHandler {
   public void afterConnectionEstablished(WebSocketSession session) {
     String userId = getUserId(session);
     sessionRegistry.register(userId, session);
-    log.info("CONNECTED: {}| total={}",
-      session.getId(), sessionRegistry.size());
+    log.info("CONNECTED: {}| total={},userId= {}",
+      session.getId(), sessionRegistry.size(), userId);
   }
 
   @Override
@@ -41,8 +41,8 @@ public class AppWebSocketHandler extends TextWebSocketHandler {
                                     CloseStatus status) {
     String userId = getUserId(session);
     sessionRegistry.remove(userId, session);
-    log.info("DISCONNECTED: {} | reason={}  | total={}",
-      session.getId(), status.getReason(), sessionRegistry.size());
+    log.info("DISCONNECTED: {} | reason={}  | total={} | userId= {}",
+      session.getId(), status.getReason(), sessionRegistry.size(), userId);
   }
 
   private String getUserId(WebSocketSession session) {
