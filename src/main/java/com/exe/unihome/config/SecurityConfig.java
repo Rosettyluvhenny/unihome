@@ -1,10 +1,16 @@
 package com.exe.unihome.config;
 
+import com.exe.unihome.auth.jwt.JwtAuthenticationFilter;
+import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.common.model.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -12,6 +18,8 @@ import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserService;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -20,8 +28,11 @@ import java.util.List;
 
 @Configuration
 @RequiredArgsConstructor
+@EnableMethodSecurity
 public class SecurityConfig {
   private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
 
   @Bean
   public OAuth2UserService<?, OAuth2User> oauth2UserService() {
@@ -32,29 +43,54 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.disable())
-      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Changed to STATELESS for JWT
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(
           "/auth/**",
           "/oauth2/**",
-          "/mail/**",
           "/login/oauth2/**",
           "/actuator/**",
           "/v3/api-docs/**",
           "/redis-test/**",
-          "/swagger-ui/**")
+          "/swagger-ui/**",
+          "/ws/**")
         .permitAll()
         .anyRequest().authenticated())
+      .exceptionHandling(exception -> exception
+        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        .accessDeniedHandler(accessDeniedHandler()))
       .oauth2Login(oauth2 -> {
         oauth2
+          .loginPage("/oauth2/authorization/google") // Explicit OAuth2 path
           .userInfoEndpoint(userInfo ->
             userInfo.userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) oauth2UserService()));
         OAuth2SuccessHandler oAuth2SuccessHandler = oAuth2SuccessHandlerProvider.getIfAvailable();
         if (oAuth2SuccessHandler != null)
           oauth2.successHandler(oAuth2SuccessHandler);
       })
+      .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
       .httpBasic(Customizer.withDefaults());
     return http.build();
+  }
+
+  @Bean
+  public AccessDeniedHandler accessDeniedHandler() {
+    return ((request, response, accessDeniedException) -> {
+      ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
+
+      response.setStatus(errorCode.getStatusCode().value());
+      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+
+      ApiResponse apiResponse = ApiResponse.builder()
+        .code(errorCode.getCode())
+        .message(errorCode.getMessage())
+        .build();
+
+      ObjectMapper objectMapper = new ObjectMapper();
+
+      response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+      response.flushBuffer();
+    });
   }
 
   @Bean
