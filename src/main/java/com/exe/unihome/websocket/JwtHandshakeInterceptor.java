@@ -25,7 +25,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
       .fromUri(request.getURI())
       .build()
       .getQueryParams()
-      .getFirst("userId");
+      .getFirst("token");
 
     if (userId == null || userId.isBlank()) {
       return false;

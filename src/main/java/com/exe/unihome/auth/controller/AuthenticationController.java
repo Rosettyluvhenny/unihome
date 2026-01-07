@@ -1,7 +1,6 @@
 package com.exe.unihome.auth.controller;
 
 import com.exe.unihome.auth.jwt.IntrospectTokenResponse;
-import com.exe.unihome.auth.jwt.JwtUtil;
 import com.exe.unihome.auth.jwt.VerifyTokenResponse;
 import com.exe.unihome.auth.model.*;
 import com.exe.unihome.auth.service.AuthenticationService;
@@ -27,7 +26,6 @@ public class AuthenticationController {
   private final AuthenticationService authenticationService;
   private final UserService userService;
   private final VerifyTokenService verifyTokenService;
-  private final JwtUtil jwtUtil;
   private final JwtProperties jwtProperties;
 
   @PostMapping("/register")
