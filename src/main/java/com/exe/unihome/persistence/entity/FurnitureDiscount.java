@@ -1,4 +1,4 @@
-package com.exe.unihome.entity;
+package com.exe.unihome.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -9,29 +9,33 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "categories")
+@Table(
+    name = "furniture_discount",
+    uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"furniture_id", "discount_id"})
+    }
+)
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Category {
+public class FurnitureDiscount {
 
     @Id
     @GeneratedValue
-    @Column(name = "category_id", updatable = false, nullable = false)
-    private UUID categoryId;
+    @Column(name = "furniture_discount_id")
+    private UUID id;
 
-    @Column(nullable = false, length = 100, unique = true)
-    private String name;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "furniture_id", nullable = false)
+    private Furniture furniture;
 
-    @OneToMany(mappedBy = "category", fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<Furniture> furnitureList = new ArrayList<>();
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "discount_id", nullable = false)
+    private Discount discount;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

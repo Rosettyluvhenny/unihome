@@ -1,5 +1,6 @@
-package com.exe.unihome.entity;
+package com.exe.unihome.persistence.entity;
 
+import com.exe.unihome.persistence.enums.FurnitureStatus;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

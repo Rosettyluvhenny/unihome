@@ -1,4 +1,4 @@
-package com.exe.unihome.entity;
+package com.exe.unihome.persistence.entity;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

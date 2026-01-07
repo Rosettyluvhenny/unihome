@@ -1,4 +1,4 @@
-package com.exe.unihome.entity;
+package com.exe.unihome.persistence.enums;
 
 public enum FurnitureStatus {
     AVAILABLE,

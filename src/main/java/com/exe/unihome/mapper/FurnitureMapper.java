@@ -1,7 +1,7 @@
 package com.exe.unihome.mapper;
 
 import com.exe.unihome.dto.furniture.response.FurnitureResponse;
-import com.exe.unihome.entity.Furniture;
+import com.exe.unihome.persistence.entity.Furniture;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 

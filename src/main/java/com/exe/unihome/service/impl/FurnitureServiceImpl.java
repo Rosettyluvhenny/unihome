@@ -5,9 +5,9 @@ import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.dto.furniture.request.CreateFurnitureRequest;
 import com.exe.unihome.dto.furniture.request.UpdateFurnitureRequest;
 import com.exe.unihome.dto.furniture.response.FurnitureResponse;
-import com.exe.unihome.entity.Category;
-import com.exe.unihome.entity.Furniture;
-import com.exe.unihome.entity.FurnitureStatus;
+import com.exe.unihome.persistence.entity.Category;
+import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.enums.FurnitureStatus;
 import com.exe.unihome.mapper.FurnitureMapper;
 import com.exe.unihome.persistence.repository.CategoryRepository;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
@@ -55,7 +55,6 @@ public class FurnitureServiceImpl implements FurnitureService {
         }
         
         Furniture furniture = Furniture.builder()
-                .furnitureId(UUID.randomUUID())
                 .category(category)
                 .name(request.getName())
                 .price(request.getPrice())

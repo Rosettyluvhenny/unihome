@@ -1,6 +1,6 @@
 package com.exe.unihome.persistence.repository;
 
-import com.exe.unihome.entity.FurnitureDiscount;
+import com.exe.unihome.persistence.entity.FurnitureDiscount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;

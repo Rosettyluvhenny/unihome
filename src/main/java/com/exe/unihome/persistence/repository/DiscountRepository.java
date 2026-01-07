@@ -1,6 +1,6 @@
 package com.exe.unihome.persistence.repository;
 
-import com.exe.unihome.entity.Discount;
+import com.exe.unihome.persistence.entity.Discount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

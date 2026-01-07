@@ -45,17 +45,20 @@ public class SecurityConfig {
       .csrf(csrf -> csrf.disable())
       .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Changed to STATELESS for JWT
       .authorizeHttpRequests(auth -> auth
-        .requestMatchers(
-          "/auth/**",
-          "/oauth2/**",
-          "/login/oauth2/**",
-          "/actuator/**",
-          "/v3/api-docs/**",
-          "/redis-test/**",
-          "/swagger-ui/**",
-          "/ws/**")
-        .permitAll()
-        .anyRequest().authenticated())
+//        .requestMatchers(
+//          "/auth/**",
+//          "/oauth2/**",
+//          "/login/oauth2/**",
+//          "/actuator/**",
+//          "/v3/api-docs/**",
+//          "/redis-test/**",
+//          "/swagger-ui/**",
+//          "/ws/**",
+//          "/furniture/**",
+//          "/category/**")
+//        .permitAll()
+//        .anyRequest().authenticated())
+        .anyRequest().permitAll()) // Temporarily disable all authentication
       .exceptionHandling(exception -> exception
         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
         .accessDeniedHandler(accessDeniedHandler()))

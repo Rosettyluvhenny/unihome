@@ -1,6 +1,6 @@
 package com.exe.unihome.persistence.repository;
 
-import com.exe.unihome.entity.Category;
+import com.exe.unihome.persistence.entity.Category;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;

@@ -1,7 +1,7 @@
 package com.exe.unihome.persistence.repository;
 
-import com.exe.unihome.entity.Furniture;
-import com.exe.unihome.entity.FurnitureStatus;
+import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.enums.FurnitureStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
