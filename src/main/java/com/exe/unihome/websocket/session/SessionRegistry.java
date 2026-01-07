@@ -13,6 +13,7 @@ public class SessionRegistry {
   private final Map<String, Set<WebSocketSession>> sessions = new ConcurrentHashMap<>();
 
   public void register(String userId, WebSocketSession session) {
+
     sessions
       .computeIfAbsent(userId, k -> ConcurrentHashMap.newKeySet())
       .add(session);
@@ -35,4 +36,5 @@ public class SessionRegistry {
   public int size() {
     return sessions.values().stream().mapToInt(Set::size).sum();
   }
+
 }

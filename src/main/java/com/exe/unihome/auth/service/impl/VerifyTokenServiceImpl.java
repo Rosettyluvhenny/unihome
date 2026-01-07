@@ -1,14 +1,15 @@
 package com.exe.unihome.auth.service.impl;
 
+import com.exe.unihome.auth.service.VerifyTokenService;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.config.JwtProperties;
+import com.exe.unihome.notification.service.NotificationService;
 import com.exe.unihome.persistence.entity.identityAndAuth.Status;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.entity.identityAndAuth.VerifyToken;
 import com.exe.unihome.persistence.repository.UserRepository;
 import com.exe.unihome.persistence.repository.VerifyTokenRepository;
-import com.exe.unihome.auth.service.VerifyTokenService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,8 @@ public class VerifyTokenServiceImpl implements VerifyTokenService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtProperties jwtProperties;
+
+  private final NotificationService notificationService;
 
   @Override
   public String issueVerifyToken(String userId) {
@@ -61,6 +64,7 @@ public class VerifyTokenServiceImpl implements VerifyTokenService {
 
     user.setStatus(Status.ACTIVE);
     userRepository.save(user);
+    notificationService.notifyVerifyEmailSuccess(user.getId());
   }
 
   @Override
