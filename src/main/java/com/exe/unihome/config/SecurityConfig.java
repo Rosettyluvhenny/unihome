@@ -43,22 +43,19 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.disable())
-      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Changed to STATELESS for JWT
+      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
-//        .requestMatchers(
-//          "/auth/**",
-//          "/oauth2/**",
-//          "/login/oauth2/**",
-//          "/actuator/**",
-//          "/v3/api-docs/**",
-//          "/redis-test/**",
-//          "/swagger-ui/**",
-//          "/ws/**",
-//          "/furniture/**",
-//          "/category/**")
-//        .permitAll()
-//        .anyRequest().authenticated())
-        .anyRequest().permitAll()) // Temporarily disable all authentication
+        .requestMatchers(
+          "/auth/**",
+          "/oauth2/**",
+          "/login/oauth2/**",
+          "/actuator/**",
+          "/v3/api-docs/**",
+          "/swagger-ui/**",
+          "/swagger-ui.html",
+          "/ws/**")
+        .permitAll()
+        .anyRequest().authenticated())
       .exceptionHandling(exception -> exception
         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
         .accessDeniedHandler(accessDeniedHandler()))

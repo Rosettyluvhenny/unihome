@@ -22,9 +22,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -64,7 +63,7 @@ public class DiscountServiceImpl implements DiscountService {
     @Override
     public DiscountResponse getDiscountById(UUID discountId) {
         Discount discount = discountRepository.findById(discountId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
         return enrichDiscountResponse(discountMapper.toResponse(discount));
     }
 
@@ -88,7 +87,7 @@ public class DiscountServiceImpl implements DiscountService {
     @Transactional
     public DiscountResponse updateDiscount(UUID discountId, UpdateDiscountRequest request) {
         Discount discount = discountRepository.findById(discountId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
         
         boolean valueChanged = false;
         
@@ -129,7 +128,7 @@ public class DiscountServiceImpl implements DiscountService {
     @Transactional
     public void deleteDiscount(UUID discountId) {
         Discount discount = discountRepository.findById(discountId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
         
         // Get all furniture with this discount
         List<FurnitureDiscount> furnitureDiscounts = furnitureDiscountRepository.findByDiscountId(discountId);
@@ -151,15 +150,34 @@ public class DiscountServiceImpl implements DiscountService {
     @Transactional
     public void applyDiscountToFurniture(UUID discountId, ApplyDiscountRequest request) {
         Discount discount = discountRepository.findById(discountId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
         
-        for (UUID furnitureId : request.getFurnitureIds()) {
-            Furniture furniture = furnitureRepository.findById(furnitureId)
-                    .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+        // Validate all furniture IDs exist before processing
+        List<UUID> furnitureIds = request.getFurnitureIds();
+        List<Furniture> furnitureList = furnitureRepository.findAllById(furnitureIds);
+        
+        if (furnitureList.size() != furnitureIds.size()) {
+            Set<UUID> foundIds = furnitureList.stream()
+                .map(Furniture::getFurnitureId)
+                .collect(Collectors.toSet());
             
+            List<UUID> notFoundIds = furnitureIds.stream()
+                .filter(id -> !foundIds.contains(id))
+                .toList();
+            
+            log.error("Furniture IDs not found: {}", notFoundIds);
+            throw new AppException(ErrorCode.FURNITURE_NOT_FOUND);
+        }
+        
+        // Apply discount to each furniture
+        for (Furniture furniture : furnitureList) {
             // Check if discount already applied
-            if (furnitureDiscountRepository.findByFurnitureIdAndDiscountId(furnitureId, discountId).isPresent()) {
-                log.warn("Discount {} already applied to furniture {}", discountId, furnitureId);
+            Optional<FurnitureDiscount> existing = furnitureDiscountRepository
+                .findByFurnitureIdAndDiscountId(furniture.getFurnitureId(), discountId);
+            
+            if (existing.isPresent()) {
+                log.warn("Discount {} already applied to furniture {}, skipping", 
+                    discount.getName(), furniture.getName());
                 continue;
             }
             
@@ -180,11 +198,11 @@ public class DiscountServiceImpl implements DiscountService {
     @Transactional
     public void removeDiscountFromFurniture(UUID discountId, UUID furnitureId) {
         Furniture furniture = furnitureRepository.findById(furnitureId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
         
         FurnitureDiscount furnitureDiscount = furnitureDiscountRepository
                 .findByFurnitureIdAndDiscountId(furnitureId, discountId)
-                .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+                .orElseThrow(() -> new AppException(ErrorCode.DISCOUNT_NOT_FOUND));
         
         furnitureDiscountRepository.deleteByFurnitureIdAndDiscountId(furnitureId, discountId);
         
@@ -195,18 +213,20 @@ public class DiscountServiceImpl implements DiscountService {
     }
     
     /**
-     * Recalculate finalPrice for a furniture item based on its discounts
+     * Recalculate finalPrice for a furniture item based on its ACTIVE discounts
      */
     private void recalculateFurniturePrice(Furniture furniture) {
-        List<FurnitureDiscount> discounts = furnitureDiscountRepository.findByFurnitureId(furniture.getFurnitureId());
+        // Only consider active discounts (within date range)
+        List<FurnitureDiscount> activeDiscounts = furnitureDiscountRepository
+            .findActiveDiscountsByFurnitureId(furniture.getFurnitureId(), LocalDate.now());
         
-        if (discounts.isEmpty()) {
-            // No discounts - finalPrice = price
+        if (activeDiscounts.isEmpty()) {
+            // No active discounts - finalPrice = price
             furniture.setFinalPrice(furniture.getPrice());
             furniture.setHasDiscount(false);
         } else {
-            // Find highest discount percentage
-            BigDecimal highestDiscount = discounts.stream()
+            // Find highest active discount percentage
+            BigDecimal highestDiscount = activeDiscounts.stream()
                     .map(fd -> fd.getDiscount().getValue())
                     .max(Comparator.naturalOrder())
                     .orElse(BigDecimal.ZERO);
@@ -220,6 +240,9 @@ public class DiscountServiceImpl implements DiscountService {
             
             furniture.setFinalPrice(finalPrice);
             furniture.setHasDiscount(true);
+            
+            log.debug("Recalculated price for furniture {}: {} -> {} ({}% off)", 
+                furniture.getName(), furniture.getPrice(), finalPrice, highestDiscount);
         }
         
         furnitureRepository.save(furniture);

@@ -30,5 +30,14 @@ public interface FurnitureDiscountRepository extends JpaRepository<FurnitureDisc
     @Modifying
     @Query("DELETE FROM FurnitureDiscount fd WHERE fd.discount.discountId = :discountId")
     void deleteByDiscountId(@Param("discountId") UUID discountId);
+    
+    @Query("SELECT fd FROM FurnitureDiscount fd " +
+           "WHERE fd.furniture.furnitureId = :furnitureId " +
+           "AND fd.discount.startDate <= :date " +
+           "AND fd.discount.endDate >= :date")
+    List<FurnitureDiscount> findActiveDiscountsByFurnitureId(
+        @Param("furnitureId") UUID furnitureId, 
+        @Param("date") java.time.LocalDate date
+    );
 }
 
