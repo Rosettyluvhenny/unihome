@@ -6,6 +6,7 @@ import com.exe.unihome.persistence.entity.notification.Notification;
 import com.exe.unihome.persistence.repository.NotificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,7 @@ public class NotificationServiceImpl implements NotificationService {
   private final WebSocketNotificationPublisher wsPublisher;
   private final ObjectMapper objectMapper;
 
+  @Transactional
   public void notifyVerifyEmailSuccess(String userId) {
     Notification n = new Notification();
     n.setId(UUID.randomUUID().toString());

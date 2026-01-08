@@ -19,7 +19,6 @@ import java.util.Date;
 public class JwtUtil {
   private final JwtProperties jwtProperties;
 
-
   public String extractUserId(String token) {
     try {
       JWTClaimsSet claims = parseToken(token);
@@ -51,7 +50,7 @@ public class JwtUtil {
       JWSVerifier verifier = new MACVerifier(jwtProperties.getSignerKey().getBytes());
 
       if (!signedJWT.verify(verifier)) {
-        return false;
+        throw new AppException(ErrorCode.UNAUTHENTICATED);
       }
 
       // Check expiration - return FALSE if expired
@@ -59,7 +58,7 @@ public class JwtUtil {
       return expirationTime != null && expirationTime.after(new Date());
 
     } catch (Exception e) {
-      return false;
+      throw new AppException(ErrorCode.UNAUTHENTICATED);
     }
   }
 
