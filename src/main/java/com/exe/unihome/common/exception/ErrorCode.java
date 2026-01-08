@@ -21,6 +21,9 @@ public enum ErrorCode {
   INVALID_TOKEN(1011, "Invalid token", HttpStatus.UNAUTHORIZED),
   TOKEN_PARSE_ERROR(1012, "PARSE TOKEN FAILED", HttpStatus.BAD_REQUEST),
   UNAUTHORIZED(1013, "Unauthorized", HttpStatus.UNAUTHORIZED),
+  FURNITURE_NOT_FOUND(2001, "Furniture not found", HttpStatus.NOT_FOUND),
+  DISCOUNT_ALREADY_APPLIED(2002, "Discount already applied to this furniture", HttpStatus.BAD_REQUEST),
+  DISCOUNT_NOT_FOUND(2003, "Discount not found", HttpStatus.NOT_FOUND),
   ;
 
   private final int code;

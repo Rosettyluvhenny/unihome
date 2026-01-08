@@ -43,7 +43,7 @@ public class SecurityConfig {
   public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
     http
       .csrf(csrf -> csrf.disable())
-      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Changed to STATELESS for JWT
+      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
       .authorizeHttpRequests(auth -> auth
         .requestMatchers(
           "/auth/**",
@@ -51,8 +51,8 @@ public class SecurityConfig {
           "/login/oauth2/**",
           "/actuator/**",
           "/v3/api-docs/**",
-          "/redis-test/**",
           "/swagger-ui/**",
+          "/swagger-ui.html",
           "/ws/**")
         .permitAll()
         .anyRequest().authenticated())
