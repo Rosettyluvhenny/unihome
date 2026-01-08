@@ -23,13 +23,13 @@ import java.util.UUID;
 @RequestMapping("/discounts")
 @RequiredArgsConstructor
 @Tag(name = "Discounts", description = "Discount management APIs")
-// @SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "bearerAuth")
 public class DiscountController {
     
     private final DiscountService discountService;
 
     @PostMapping
-    // @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Operation(summary = "Create a new discount", 
                description = "Create a discount with percentage value (0.01-100) and date range. " +
                            "Optional: Include furnitureIds to apply discount immediately upon creation.")
@@ -107,7 +107,7 @@ public class DiscountController {
     }
 
     @PostMapping("/{discountId}/apply")
-    // @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Operation(summary = "Apply discount to furniture items", 
                description = "Apply this discount to one or more furniture items. Will calculate and update finalPrice.")
     public ResponseEntity<ApiResponse<Void>> applyDiscountToFurniture(

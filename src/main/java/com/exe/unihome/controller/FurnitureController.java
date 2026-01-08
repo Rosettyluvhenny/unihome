@@ -26,13 +26,13 @@ import java.util.UUID;
 @RequestMapping("/furniture")
 @RequiredArgsConstructor
 @Tag(name = "Furniture", description = "Furniture management APIs")
-// @SecurityRequirement(name = "bearerAuth")
+@SecurityRequirement(name = "bearerAuth")
 public class FurnitureController {
     
     private final FurnitureService furnitureService;
 
     @PostMapping
-    // @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Operation(summary = "Create a new furniture item")
     public ResponseEntity<ApiResponse<FurnitureResponse>> createFurniture(
             @Valid @RequestBody CreateFurnitureRequest request) {
@@ -107,7 +107,7 @@ public class FurnitureController {
     }
 
     @PutMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
+    @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF')")
     @Operation(summary = "Update furniture")
     public ResponseEntity<ApiResponse<FurnitureResponse>> updateFurniture(
             @PathVariable UUID id,
@@ -121,7 +121,7 @@ public class FurnitureController {
     }
 
     @DeleteMapping("/{id}")
-    // @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Delete furniture")
     public ResponseEntity<ApiResponse<Void>> deleteFurniture(@PathVariable UUID id) {
         furnitureService.deleteFurniture(id);
