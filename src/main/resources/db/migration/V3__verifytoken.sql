@@ -13,7 +13,7 @@ CREATE TABLE verify_token (
 CREATE INDEX idx_verify_token_user_id ON verify_token (user_id);
 CREATE INDEX idx_verify_token_expires_at ON verify_token (expires_at);
 
--- trigger for updated_at on verify_token
+-- trigger for updated_at
 CREATE OR REPLACE FUNCTION set_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -27,5 +27,15 @@ CREATE TRIGGER trg_verify_token_updated_at
     BEFORE UPDATE ON verify_token
     FOR EACH ROW
     EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_verify_user_updated_at
+	BEFORE UPDATE ON users
+	FOR EACH ROW
+	EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_verify_refresh_at
+	BEFORE UPDATE ON refresh_token
+	FOR EACH ROW
+	EXECUTE FUNCTION set_updated_at();
 
 

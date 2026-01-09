@@ -1,4 +1,6 @@
 FROM maven:3.9-amazoncorretto-21-alpine AS build
+
+# Build stage
 WORKDIR /app
 
 # Alpine: cần ca-certificates để Maven tải deps HTTPS ổn định

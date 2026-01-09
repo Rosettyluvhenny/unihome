@@ -14,7 +14,7 @@
   <name>unihome</name>
   <description>Demo project for Spring Boot</description>
   <properties>
-    <java.version>21</java.version>
+    <java.version>17</java.version>
     <mapstruct.version>1.6.3</mapstruct.version>
     <jjwt.version>0.13.0</jjwt.version>
   </properties>
@@ -113,8 +113,14 @@
     </dependency>
 
     <dependency>
+<<<<<<< HEAD
       <groupId>com.fasterxml.jackson.core</groupId>
       <artifactId>jackson-databind</artifactId>
+=======
+      <groupId>com.vladmihalcea</groupId>
+      <artifactId>hibernate-types-60</artifactId>
+      <version>2.21.1</version>
+>>>>>>> c7a2d70e34241ac62e87c5f99d777654bdfd475b
     </dependency>
   </dependencies>
 
