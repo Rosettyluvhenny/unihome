@@ -1,11 +1,11 @@
 package com.exe.unihome.config;
 
-import com.exe.unihome.common.exception.ErrorCode;
-import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.auth.model.AuthResult;
-import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.auth.service.AuthTokenService;
 import com.exe.unihome.auth.service.UserService;
+import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.common.model.ApiResponse;
+import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -70,7 +70,14 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
     response.setStatus(HttpServletResponse.SC_OK);
     response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-    objectMapper.writeValue(response.getWriter(), result.response());
+//    objectMapper.writeValue(response.getWriter(), result.response());
+    objectMapper.writeValue(
+      response.getWriter(),
+      ApiResponse.builder().code(200)
+        .message("Login successful")
+        .data(result.response())
+        .build()
+    );
   }
 
   private String getAttribute(OAuth2User user, String key) {
