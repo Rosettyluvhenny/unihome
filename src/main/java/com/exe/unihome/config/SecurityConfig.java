@@ -64,13 +64,13 @@ public class SecurityConfig {
         .accessDeniedHandler(accessDeniedHandler()))
       .oauth2Login(oauth2 -> {
         oauth2
-          .loginPage("/oauth2/authorization/google") // Explicit OAuth2 path
           .userInfoEndpoint(userInfo ->
             userInfo.userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) oauth2UserService()));
         OAuth2SuccessHandler oAuth2SuccessHandler = oAuth2SuccessHandlerProvider.getIfAvailable();
         if (oAuth2SuccessHandler != null)
           oauth2.successHandler(oAuth2SuccessHandler);
       })
+
       .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
       .httpBasic(Customizer.withDefaults());
     return http.build();
