@@ -7,8 +7,9 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface VerifyTokenRepository extends JpaRepository<VerifyToken, String> {
-  Optional<VerifyToken> findByUserIdAndRevokedAtIsNull(String userId);
+  Optional<VerifyToken> findByUserIdAndRevokedAtIsNullAndExpiresAtAfter(String userId, LocalDateTime expiresAtAfter);
 
   void deleteByRevokedAtIsNotNullOrExpiresAtBefore(LocalDateTime cutoff);
+
 }
 

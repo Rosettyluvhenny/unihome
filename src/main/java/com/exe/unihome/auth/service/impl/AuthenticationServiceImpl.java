@@ -6,6 +6,7 @@ import com.exe.unihome.auth.service.AuthTokenService;
 import com.exe.unihome.auth.service.AuthenticationService;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.persistence.entity.identityAndAuth.Status;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -23,13 +24,14 @@ public class AuthenticationServiceImpl implements AuthenticationService {
   public AuthResult authenticate(AuthenticationRequest request) {
     User user = userRepository.findByEmail(request.getEmail())
       .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-
+    if (user.getStatus().equals(Status.UNACTIVE))
+      throw new AppException(ErrorCode.USER_NOT_VERIFIED);
     if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
       throw new AppException(ErrorCode.INVALID_CREDENTIALS);
     }
-
     return authTokenService.issueTokens(user);
   }
+
 
   @Override
   public AuthResult refresh(String refreshTokenCookie) {

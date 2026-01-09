@@ -79,3 +79,6 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     doc-expansion: none
+SENDGRID_API_KEY: ${SENDGRID_API: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}
+
+FE_URL: ${PAGE_URL:http://localhost:8080/unihome}
