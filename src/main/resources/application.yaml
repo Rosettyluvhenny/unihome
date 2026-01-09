@@ -75,3 +75,5 @@ springdoc:
     operations-sorter: method
     tags-sorter: alpha
     doc-expansion: none
+SENDGRID_API_KEY: ${SENDGRID_API}
+FE_URL: ${PAGE_URL}
