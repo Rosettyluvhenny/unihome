@@ -8,5 +8,7 @@ public interface VerifyTokenService {
   void verifyToken(String verifyTokenString);
 
   VerifyToken getValidVerifyToken(String tokenId, String secret);
+
+  VerifyToken findValidVerifyTokenByUserId(String userId);
 }
 

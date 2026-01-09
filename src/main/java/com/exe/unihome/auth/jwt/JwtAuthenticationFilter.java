@@ -1,5 +1,7 @@
 package com.exe.unihome.auth.jwt;
 
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,7 +42,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         log.debug("Set Spring Security authentication for userId: {}", userId);
       }
     } catch (Exception e) {
-      log.debug("Could not set user authentication in security context", e);
+      throw new AppException(ErrorCode.UNAUTHORIZED);
     }
 
     filterChain.doFilter(request, response);

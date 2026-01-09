@@ -3,43 +3,74 @@ package com.exe.unihome.common.exception;
 import com.exe.unihome.common.model.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.context.request.WebRequest;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestControllerAdvice
 @Slf4j
 public class GlobalExceptionHandler {
 
   @ExceptionHandler(AppException.class)
-  public ResponseEntity<ApiResponse<Void>> handleAppException(AppException exception) {
-    ErrorCode errorCode = exception.getErrorCode();
-    return ResponseEntity.status(errorCode.getStatusCode())
-      .body(ApiResponse.<Void>builder()
+  public ResponseEntity<ApiResponse<Object>> handleAppException(AppException ex, WebRequest request) {
+    ErrorCode errorCode = ex.getErrorCode();
+    log.error("AppException: {}", errorCode.getMessage());
+
+    return ResponseEntity
+      .status(errorCode.getStatusCode())
+      .body(ApiResponse.builder()
         .code(errorCode.getCode())
         .message(errorCode.getMessage())
         .build());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException exception) {
-    FieldError fieldError = exception.getBindingResult().getFieldError();
-    String message = fieldError != null ? fieldError.getDefaultMessage() : ErrorCode.INVALID_REQUEST.getMessage();
-    return ResponseEntity.status(ErrorCode.INVALID_REQUEST.getStatusCode())
-      .body(ApiResponse.<Void>builder()
+  public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(
+    MethodArgumentNotValidException ex, WebRequest request) {
+    Map<String, String> errors = new HashMap<>();
+    ex.getBindingResult().getFieldErrors().forEach(error ->
+      errors.put(error.getField(), error.getDefaultMessage())
+    );
+
+    log.error("Validation failed: {}", errors);
+
+    return ResponseEntity
+      .badRequest()
+      .body(ApiResponse.<Map<String, String>>builder()
         .code(ErrorCode.INVALID_REQUEST.getCode())
-        .message(message)
+        .message("Validation failed")
+        .data(errors)
         .build());
   }
 
-  @ExceptionHandler(RuntimeException.class)
-  public ResponseEntity<ApiResponse<Void>> handleRuntime(RuntimeException exception) {
-    log.error(exception.getMessage(), exception);
-    return ResponseEntity.status(ErrorCode.UNCATEGORIZED_EXCEPTION.getStatusCode())
-      .body(ApiResponse.<Void>builder()
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<ApiResponse<Object>> handleIllegalArgumentException(
+    IllegalArgumentException ex, WebRequest request) {
+    log.error("IllegalArgumentException: {}", ex.getMessage());
+
+    return ResponseEntity
+      .badRequest()
+      .body(ApiResponse.builder()
+        .code(ErrorCode.INVALID_REQUEST.getCode())
+        .message(ex.getMessage())
+        .build());
+  }
+
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<ApiResponse<Object>> handleGeneralException(
+    Exception ex, WebRequest request) {
+    log.error("Unexpected exception occurred", ex);
+
+    return ResponseEntity
+      .internalServerError()
+      .body(ApiResponse.builder()
         .code(ErrorCode.UNCATEGORIZED_EXCEPTION.getCode())
         .message(ErrorCode.UNCATEGORIZED_EXCEPTION.getMessage())
         .build());
   }
 }
+

@@ -1,21 +1,16 @@
 package com.exe.unihome.controller;
 
 import com.exe.unihome.auth.controller.AuthenticationController;
+import com.exe.unihome.auth.model.*;
+import com.exe.unihome.auth.service.AuthenticationService;
+import com.exe.unihome.auth.service.UserService;
+import com.exe.unihome.auth.service.VerifyTokenService;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.common.exception.GlobalExceptionHandler;
 import com.exe.unihome.config.JwtProperties;
-import com.exe.unihome.auth.model.AuthenticationRequest;
-import com.exe.unihome.auth.model.RegistrationRequest;
-import com.exe.unihome.auth.model.UserResponse;
-import com.exe.unihome.auth.model.AuthResult;
-import com.exe.unihome.auth.model.AuthenticationResponse;
-import com.exe.unihome.auth.model.RegistrationResponse;
 import com.exe.unihome.persistence.entity.identityAndAuth.RoleName;
 import com.exe.unihome.persistence.entity.identityAndAuth.Status;
-import com.exe.unihome.auth.service.AuthenticationService;
-import com.exe.unihome.auth.service.UserService;
-import com.exe.unihome.auth.service.VerifyTokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
@@ -88,13 +83,7 @@ class AuthenticationControllerTest {
     userResponse.setEmail("john@example.com");
     userResponse.setStatus(Status.UNACTIVE);
     userResponse.setRole(RoleName.CUSTOMER);
-
-    RegistrationResponse registrationResponse = RegistrationResponse.builder()
-      .user(userResponse)
-      .message("Registration successful. Please check your email to verify your account and activate access.")
-      .build();
-
-    when(userService.register(any(RegistrationRequest.class))).thenReturn(registrationResponse);
+    when(userService.register(any(RegistrationRequest.class))).thenReturn(userResponse);
 
     // Act & Assert
     mockMvc.perform(post("/auth/register")

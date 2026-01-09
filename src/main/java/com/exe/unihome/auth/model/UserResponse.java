@@ -12,4 +12,6 @@ public class UserResponse {
   private Status status;
   private RoleName role;
   private String address;
+  private String phone;
+  private String image;
 }

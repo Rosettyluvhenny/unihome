@@ -1,47 +1,50 @@
 package com.exe.unihome.mail.service.impl;
 
 import com.exe.unihome.mail.service.MailService;
+import com.sendgrid.Method;
+import com.sendgrid.Request;
+import com.sendgrid.Response;
+import com.sendgrid.SendGrid;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import lombok.RequiredArgsConstructor;
-import org.springframework.mail.SimpleMailMessage;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MailServiceImpl implements MailService {
+
   private final JavaMailSender mailSender;
+  @Value("${SENDGRID_API_KEY}")
+  private String apiKey;
+
+  @Value("${FE_URL}")
+  private String feUrl;
 
   @Override
   public void sendTestMail(String to) {
-    SimpleMailMessage msg = new SimpleMailMessage();
-    msg.setTo(to);
-    msg.setSubject("Test mail");
-    msg.setText("Hello SMTP");
-
-    mailSender.send(msg);
+//    SimpleMailMessage msg = new SimpleMailMessage();
+//    msg.setTo(to);
+//    msg.setSubject("Test mail");
+//    msg.setText("Hello SMTP");
+//
+//    mailSender.send(msg);
+    log.info("api {}", to);
+    sendMailHttpApi(to, "Test mail", "HELLO from sendgrid");
   }
 
   @Override
   public void sendVerificationEmail(String to, String fullName, String verifyToken) {
-    try {
-      MimeMessage mimeMessage = mailSender.createMimeMessage();
-      MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
-
-      helper.setTo(to);
-      helper.setSubject("Email Verification - UNIHOME");
-      helper.setText(buildVerificationEmailHtml(fullName, verifyToken), true);
-
-      mailSender.send(mimeMessage);
-    } catch (MessagingException e) {
-      throw new RuntimeException("Failed to send verification email", e);
-    }
+    sendMailHttpApi(to, "Email Verification - UNIHOME", buildVerificationEmailHtml(fullName, verifyToken));
   }
 
   private String buildVerificationEmailHtml(String fullName, String verifyToken) {
-    String verificationUrl = "http://localhost:8080/unihome/auth/verify?token=" + verifyToken;
+    String verificationUrl = feUrl + "/auth/verify?token=" + verifyToken;
 
     return """
       <!DOCTYPE html>
@@ -208,6 +211,27 @@ public class MailServiceImpl implements MailService {
       </body>
       </html>
       """.formatted(fullName, verificationUrl);
+  }
+
+  private void sendMailHttpApi(String to, String subject, String html) {
+    Email from = new Email("exeunihome@gmail.com");
+    Email toEmail = new Email(to);
+    Content content = new Content("text/html", html);
+    Mail mail = new Mail(from, subject, toEmail, content);
+
+    SendGrid sg = new SendGrid(apiKey);
+    Request request = new Request();
+
+    try {
+      request.setMethod(Method.POST);
+      request.setEndpoint("mail/send");
+      request.setBody(mail.build());
+
+      Response response = sg.api(request);
+      log.info("Status: " + response.getStatusCode());
+    } catch (Exception e) {
+      throw new RuntimeException("SendGrid send failed", e);
+    }
   }
 }
 

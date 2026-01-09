@@ -26,7 +26,6 @@ public class VerifyTokenServiceImpl implements VerifyTokenService {
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
   private final JwtProperties jwtProperties;
-
   private final NotificationService notificationService;
 
   @Override
@@ -97,6 +96,12 @@ public class VerifyTokenServiceImpl implements VerifyTokenService {
       throw new AppException(ErrorCode.VERIFY_TOKEN_INVALID);
     }
     return new TokenParts(parts[0], parts[1]);
+  }
+
+  @Override
+  public VerifyToken findValidVerifyTokenByUserId(String userId) {
+    LocalDateTime now = LocalDateTime.now();
+    return verifyTokenRepository.findByUserIdAndRevokedAtIsNullAndExpiresAtAfter(userId, now).orElse(null);
   }
 
   private record TokenParts(String id, String secret) {

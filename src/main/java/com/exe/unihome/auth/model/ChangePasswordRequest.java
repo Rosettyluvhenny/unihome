@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class RegistrationResponse {
-  private UserResponse user;
-  private String message;
+public class ChangePasswordRequest {
+  private String currentPassword;
+  private String newPassword;
+  private String confirmPassword;
 }
 
