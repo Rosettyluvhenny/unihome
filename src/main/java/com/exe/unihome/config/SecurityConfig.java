@@ -112,7 +112,7 @@ public class SecurityConfig {
         config.setAllowedHeaders(List.of("*"));
 
         // BẮT BUỘC cho OAuth2 + HttpOnly JWT Cookie
-        config.setAllowCredentials(true);
+        config.setAllowCredentials(false);
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);

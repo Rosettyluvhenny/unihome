@@ -44,7 +44,6 @@ public class MailServiceImpl implements MailService {
   }
 
   private String buildVerificationEmailHtml(String fullName, String verifyToken) {
-    String verificationUrl = feUrl + "/auth/verify?token=" + verifyToken;
 
     return """
       <!DOCTYPE html>
@@ -187,7 +186,7 @@ public class MailServiceImpl implements MailService {
 
                   <!-- Verification Button -->
                   <div class="button-container">
-                      <a href="%s" class="verify-button">Verify Email Address</a>
+                      <p class="verify-button">Verification code <span>%s</span></a>
                   </div>
 
                   <!-- Additional Information -->
@@ -210,7 +209,7 @@ public class MailServiceImpl implements MailService {
           </div>
       </body>
       </html>
-      """.formatted(fullName, verificationUrl);
+      """.formatted(fullName, verifyToken);
   }
 
   private void sendMailHttpApi(String to, String subject, String html) {
