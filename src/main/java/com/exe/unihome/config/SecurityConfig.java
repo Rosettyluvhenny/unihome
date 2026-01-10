@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -33,6 +34,9 @@ public class SecurityConfig {
   private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private String[] publicGetUrl = {"/category/**",
+    "/discounts/**",
+    "/furniture/**"};
 
   @Bean
   public OAuth2UserService<?, OAuth2User> oauth2UserService() {
@@ -58,6 +62,7 @@ public class SecurityConfig {
           "/swagger-ui.html",
           "/ws/**")
         .permitAll()
+        .requestMatchers(HttpMethod.GET, publicGetUrl).permitAll()
         .anyRequest().authenticated())
       .exceptionHandling(exception -> exception
         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
@@ -103,7 +108,8 @@ public class SecurityConfig {
     config.setAllowedOrigins(List.of(
       "http://localhost:3000",          // React local
       "http://localhost:5173",          // Vite local (nếu dùng)
-      "https://*.up.railway.app"        // Swagger + prod
+      "https://*.up.railway.app",
+      "*"// Swagger + prod
     ));
 
     config.setAllowedMethods(List.of(
