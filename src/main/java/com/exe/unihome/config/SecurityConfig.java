@@ -31,91 +31,99 @@ import java.util.List;
 @RequiredArgsConstructor
 @EnableMethodSecurity
 public class SecurityConfig {
+  private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
+  private final JwtAuthenticationFilter jwtAuthenticationFilter;
+  private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  private final String[] publicGetUrl = {"/category/**", "/discounts/**", "/furniture/**"};
 
-    private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
-    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+  @Bean
+  public OAuth2UserService<?, OAuth2User> oauth2UserService() {
+    return new DefaultOAuth2UserService();
+  }
 
-    private final String[] publicGetUrl = {"/category/**", "/discounts/**", "/furniture/**"};
+  @Bean
+  public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    http
+      .cors(cors -> corsConfigurationSource())
+      .csrf(csrf -> csrf.disable())
+      .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+      .authorizeHttpRequests(auth -> auth
+        .requestMatchers(
+          "/auth/**",
+          "/oauth2/**",
+          "/login/oauth2/**",
+          "/mail/**",
+          "/actuator/**",
+          "/v3/api-docs/**",
+          "/redis-test/**",
+          "/swagger-ui/**",
+          "/users/**",
+          "/swagger-ui.html",
+          "/ws/**")
+        .permitAll()
+        .requestMatchers(HttpMethod.GET, publicGetUrl).permitAll()
+        .requestMatchers(HttpMethod.POST, "/notifications").permitAll()
+        .anyRequest().authenticated())
+      .exceptionHandling(exception -> exception
+        .authenticationEntryPoint(jwtAuthenticationEntryPoint)
+        .accessDeniedHandler(accessDeniedHandler()))
+      .oauth2Login(oauth2 -> {
+        oauth2
+          .loginPage("/oauth2/authorization/google") // Explicit OAuth2 path
+          .userInfoEndpoint(userInfo ->
+            userInfo.userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) oauth2UserService()));
+        OAuth2SuccessHandler oAuth2SuccessHandler = oAuth2SuccessHandlerProvider.getIfAvailable();
+        if (oAuth2SuccessHandler != null)
+          oauth2.successHandler(oAuth2SuccessHandler);
+      })
+      .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+      .httpBasic(Customizer.withDefaults());
+    return http.build();
+  }
 
-    @Bean
-    public OAuth2UserService<?, OAuth2User> oauth2UserService() {
-        return new DefaultOAuth2UserService();
-    }
+  @Bean
+  public AccessDeniedHandler accessDeniedHandler() {
+    return ((request, response, accessDeniedException) -> {
+      ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-            .cors(Customizer.withDefaults()) // BẮT BUỘC
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth
-                .requestMatchers(
-                    "/auth/**",
-                    "/oauth2/**",
-                    "/login/oauth2/**",
-                    "/mail/**",
-                    "/actuator/**",
-                    "/v3/api-docs/**",
-                    "/redis-test/**",
-                    "/swagger-ui/**",
-                    "/users/**",
-                    "/swagger-ui.html",
-                    "/ws/**")
-                .permitAll()
-                .requestMatchers(HttpMethod.GET, publicGetUrl).permitAll()
-                .anyRequest().authenticated())
-            .exceptionHandling(exception -> exception
-                .authenticationEntryPoint(jwtAuthenticationEntryPoint)
-                .accessDeniedHandler(accessDeniedHandler()))
-            .oauth2Login(oauth2 -> {
-                oauth2.userInfoEndpoint(userInfo ->
-                    userInfo.userService((OAuth2UserService<OAuth2UserRequest, OAuth2User>) oauth2UserService()));
-                OAuth2SuccessHandler handler = oAuth2SuccessHandlerProvider.getIfAvailable();
-                if (handler != null) oauth2.successHandler(handler);
-            })
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-            .httpBasic(Customizer.withDefaults());
+      response.setStatus(errorCode.getStatusCode().value());
+      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-        return http.build();
-    }
+      ApiResponse apiResponse = ApiResponse.builder()
+        .code(errorCode.getCode())
+        .message(errorCode.getMessage())
+        .build();
 
-    @Bean
-    public AccessDeniedHandler accessDeniedHandler() {
-        return (request, response, accessDeniedException) -> {
-            ErrorCode errorCode = ErrorCode.UNAUTHORIZED;
-            response.setStatus(errorCode.getStatusCode().value());
-            response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+      ObjectMapper objectMapper = new ObjectMapper();
 
-            ApiResponse apiResponse = ApiResponse.builder()
-                .code(errorCode.getCode())
-                .message(errorCode.getMessage())
-                .build();
+      response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
+      response.flushBuffer();
+    });
+  }
 
-            ObjectMapper objectMapper = new ObjectMapper();
-            response.getWriter().write(objectMapper.writeValueAsString(apiResponse));
-            response.flushBuffer();
-        };
-    }
+  @Bean
+  public CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration config = new CorsConfiguration();
 
-    // ======================= CORS FULL ACCESS =======================
+    config.setAllowedOrigins(List.of(
+      "http://localhost:3000",          // React local
+      "http://localhost:5173",          // Vite local (nếu dùng)
+      "https://*.up.railway.app",
+      "*"// Swagger + prod
+    ));
 
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
+    config.setAllowedMethods(List.of(
+      "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"
+    ));
 
-        // MỞ TOÀN BỘ DOMAIN (DEV + PROD + RAILWAY)
-        config.setAllowedOriginPatterns(List.of("*"));
+    config.setAllowedHeaders(List.of("*"));
 
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+    // ❗ Swagger + JWT + OAuth2 → PHẢI false nếu origins dùng wildcard
+    config.setAllowCredentials(false);
 
-        config.setAllowedHeaders(List.of("*"));
-
-        // BẮT BUỘC cho OAuth2 + HttpOnly JWT Cookie
-        config.setAllowCredentials(false);
-
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", config);
-        return source;
-    }
+    UrlBasedCorsConfigurationSource source =
+      new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", config);
+    return source;
+  }
 }

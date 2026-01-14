@@ -4,6 +4,8 @@ import com.exe.unihome.auth.service.VerifyTokenService;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.config.JwtProperties;
+import com.exe.unihome.notification.NotificationChannel;
+import com.exe.unihome.notification.NotificationType;
 import com.exe.unihome.notification.service.NotificationService;
 import com.exe.unihome.persistence.entity.identityAndAuth.Status;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
@@ -63,7 +65,7 @@ public class VerifyTokenServiceImpl implements VerifyTokenService {
 
     user.setStatus(Status.ACTIVE);
     userRepository.save(user);
-    notificationService.notifyVerifyEmailSuccess(user.getId());
+    notificationService.createNotification(user.getId(), "Acount verified", NotificationType.PROFILE, NotificationChannel.EMAIL);
   }
 
   @Override

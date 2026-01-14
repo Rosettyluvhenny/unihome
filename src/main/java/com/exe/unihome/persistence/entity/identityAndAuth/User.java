@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class User {
   @Id
+  @GeneratedValue(strategy = GenerationType.UUID)
   private String id;
 
   @Column(name = "full_name", nullable = false)

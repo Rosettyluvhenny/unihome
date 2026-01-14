@@ -46,7 +46,6 @@ public class UserServiceImpl implements UserService {
       throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
     }
     User user = User.builder()
-      .id(UUID.randomUUID().toString())
       .fullName(request.getFullName())
       .email(request.getEmail())
       .password(passwordEncoder.encode(request.getPassword()))
@@ -78,7 +77,6 @@ public class UserServiceImpl implements UserService {
 
     String resolvedName = fullName != null && !fullName.isBlank() ? fullName : email;
     User user = User.builder()
-      .id(UUID.randomUUID().toString())
       .fullName(resolvedName)
       .email(email)
       .password(passwordEncoder.encode(UUID.randomUUID().toString()))
@@ -152,7 +150,6 @@ public class UserServiceImpl implements UserService {
     }
 
     User user = User.builder()
-      .id(UUID.randomUUID().toString())
       .fullName(userCreateRequest.getFullName())
       .email(userCreateRequest.getEmail())
       .password(passwordEncoder.encode(userCreateRequest.getPassword()))

@@ -2,30 +2,35 @@ package com.exe.unihome.notification.controller;
 
 
 import com.exe.unihome.common.model.ApiResponse;
+import com.exe.unihome.notification.NotificationRequest;
+import com.exe.unihome.notification.service.NotificationService;
 import com.exe.unihome.persistence.entity.notification.Notification;
-import com.exe.unihome.persistence.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/notifications")
 public class NotificationQueryController {
 
-  private final NotificationRepository repository;
+  private final NotificationService notificationService;
 
   @GetMapping("/unread")
-  public ResponseEntity<ApiResponse<List<Notification>>> unread(@RequestParam String userId) {
-    return ResponseEntity.ok(ApiResponse.<List<Notification>>builder()
-      .code(200)
-      .message("Unread notifications retrieved successfully")
-      .data(repository.findByUserIdOrderByCreatedAtDesc(userId))
-      .build());
+  public ResponseEntity<ApiResponse<Page<Notification>>> getAllUnreadNotifications(Pageable pageable) {
+    return ResponseEntity.ok(notificationService.getAllNotificationsByUserIdAndUnread(pageable));
   }
+
+  @GetMapping("/latest-unread")
+  public ResponseEntity<ApiResponse<Page<Notification>>> getLatestUnreadNotifications(Pageable pageable) {
+    return ResponseEntity.ok(notificationService.getLatestNotificationsByUserIdAndUnread(pageable));
+  }
+
+  @PostMapping()
+  public ResponseEntity<ApiResponse<Notification>> createTestNotification(@RequestBody NotificationRequest request) {
+    return ResponseEntity.ok(notificationService.createforTest(request));
+  }
+
 }
