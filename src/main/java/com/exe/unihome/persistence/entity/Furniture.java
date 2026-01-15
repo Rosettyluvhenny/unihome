@@ -60,6 +60,11 @@ public class Furniture {
     @Builder.Default
     private List<FurnitureDiscount> furnitureDiscounts = new ArrayList<>();
 
+    @OneToMany(mappedBy = "furniture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC, createdAt ASC")
+    @Builder.Default
+    private List<FurnitureImage> images = new ArrayList<>();
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

@@ -7,6 +7,7 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -28,4 +29,10 @@ public class CreateFurnitureRequest {
     
     @NotNull(message = "Status is required")
     private String status; // AVAILABLE, OUT_OF_STOCK, DISCONTINUED
+
+    // Optional: list of image URLs to attach when creating furniture
+    private List<String> imageUrls;
+
+    // Optional: which URL should be primary; if null uses first image
+    private String primaryImageUrl;
 }
