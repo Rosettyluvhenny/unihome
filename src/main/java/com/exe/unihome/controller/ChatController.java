@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
-import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -29,7 +28,7 @@ public class ChatController {
   @GetMapping("/rooms")
   public ResponseEntity<List<ChatRoom>> getAllChatRooms() {
     String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<ChatRoom> rooms = chatService.getAllChatRoomsByUserId(UUID.fromString(userId));
+    List<ChatRoom> rooms = chatService.getAllChatRoomsByUserId(userId);
     return ResponseEntity.ok(rooms);
   }
 
@@ -38,7 +37,7 @@ public class ChatController {
    */
   @GetMapping("/rooms/{roomId}/messages")
   public ResponseEntity<Page<ChatMessage>> getChatMessages(
-    @PathVariable UUID roomId,
+    @PathVariable String roomId,
     Pageable pageable
   ) {
     Page<ChatMessage> messages = chatService.getMessagesByRoomId(roomId, pageable);

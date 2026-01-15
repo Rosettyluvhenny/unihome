@@ -6,8 +6,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
-
 /**
  * Payload for sending a chat message via WebSocket.
  * Logic determines the room automatically:
@@ -25,7 +23,7 @@ public class SendChatMessageRequest {
    * If set, botType should be null.
    */
   @JsonProperty("recipientId")
-  private UUID recipientId;
+  private String recipientId;
 
   /**
    * Bot type (for user-to-bot chat).

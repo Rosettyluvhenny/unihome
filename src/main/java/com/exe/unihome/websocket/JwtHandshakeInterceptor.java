@@ -1,6 +1,7 @@
 package com.exe.unihome.websocket;
 
 import com.exe.unihome.auth.service.AuthTokenService;
+import com.exe.unihome.auth.service.UserService;
 import com.nimbusds.jose.JOSEException;
 import com.nimbusds.jwt.JWTParser;
 import com.nimbusds.jwt.SignedJWT;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class JwtHandshakeInterceptor implements HandshakeInterceptor {
 
   private final AuthTokenService authTokenService;
+  private final UserService userService;
 
   @Override
   public boolean beforeHandshake(
@@ -48,7 +50,7 @@ public class JwtHandshakeInterceptor implements HandshakeInterceptor {
       SignedJWT signedJWT = (SignedJWT) JWTParser.parse(token);
       String userId = signedJWT.getJWTClaimsSet().getStringClaim("userId");
 
-      if (userId == null || userId.isBlank()) {
+      if (userId == null || userId.isBlank() || !userService.existById(userId)) {
         return false;
       }
 

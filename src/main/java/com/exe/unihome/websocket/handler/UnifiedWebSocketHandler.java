@@ -2,13 +2,13 @@ package com.exe.unihome.websocket.handler;
 
 import com.exe.unihome.chat.serviceImp.BotServiceImpl;
 import com.exe.unihome.chat.serviceImp.ChatServiceImpl;
-import com.exe.unihome.websocket.WsSessionManager;
 import com.exe.unihome.websocket.dto.ChatMessageResponse;
 import com.exe.unihome.websocket.dto.SendChatMessageRequest;
 import com.exe.unihome.websocket.dto.SystemMessage;
 import com.exe.unihome.websocket.dto.WsMessage;
 import com.exe.unihome.websocket.enums.WsMessageAction;
 import com.exe.unihome.websocket.enums.WsMessageType;
+import com.exe.unihome.websocket.session.WsSessionManager;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.UUID;
+import java.util.Set;
 
 /**
  * Unified WebSocket handler for chat and notification messages.
@@ -42,9 +42,13 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
     String userId = (String) session.getAttributes().get("userId");
     if (userId != null) {
       // Ensure only one session per user (close old session if exists)
-      WebSocketSession oldSession = sessionManager.getSession(userId);
-      if (oldSession != null && oldSession.isOpen()) {
-        oldSession.close(CloseStatus.NORMAL);
+      Set<WebSocketSession> oldSessions = sessionManager.getSessions(userId);
+      if (oldSessions != null && !oldSessions.isEmpty()) {
+        for (WebSocketSession oldSession : oldSessions) {
+          if (oldSession.isOpen()) {
+            oldSession.close(CloseStatus.NORMAL);
+          }
+        }
       }
       sessionManager.addSession(userId, session);
       log.info("User {} connected via WebSocket", userId);
@@ -136,15 +140,14 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
         return;
       }
 
-      UUID senderId = UUID.fromString(userId);
 
       // Handle user-to-user chat
       if (request.getRecipientId() != null) {
-        handleUserToUserMessage(request, session, userId, senderId);
+        handleUserToUserMessage(request, session, userId, userId);
       }
       // Handle user-to-bot chat
       else {
-        handleUserToBotMessage(request, session, userId, senderId);
+        handleUserToBotMessage(request, session, userId, userId);
       }
 
     } catch (Exception e) {
@@ -153,7 +156,7 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
     }
   }
 
-  private void handleUserToUserMessage(SendChatMessageRequest request, WebSocketSession session, String userId, UUID senderId) throws IOException {
+  private void handleUserToUserMessage(SendChatMessageRequest request, WebSocketSession session, String userId, String senderId) throws IOException {
     // Auto-create or retrieve private room
     var chatRoom = chatService.sendPrivateMessage(senderId, request.getRecipientId(), request.getContent()).getRoomId();
 
@@ -172,7 +175,7 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
       .createdAt(message.get().getCreatedAt())
       .build();
 
-    String recipientId = request.getRecipientId().toString();
+    String recipientId = request.getRecipientId();
 
     // Check if receiver is online
     if (sessionManager.isUserOnline(recipientId)) {
@@ -187,10 +190,10 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
     sendChatConfirmation(session, chatRoom);
   }
 
-  private void handleUserToBotMessage(SendChatMessageRequest request, WebSocketSession session, String userId, UUID senderId) throws IOException {
+  private void handleUserToBotMessage(SendChatMessageRequest request, WebSocketSession session, String userId, String senderId) throws IOException {
     // Auto-create or retrieve bot room
     var botMessage = chatService.sendBotMessage(senderId, request.getBotType(), request.getContent());
-    UUID roomId = botMessage.getRoomId();
+    String roomId = botMessage.getRoomId();
 
     // Generate bot response
     String botResponse = botService.generateBotResponse(request.getContent());
@@ -215,24 +218,28 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
   }
 
   private void pushChatMessage(String userId, ChatMessageResponse message) throws IOException {
-    WebSocketSession session = sessionManager.getSession(userId);
-    if (session != null && session.isOpen()) {
-      WsMessage wsMessage = WsMessage.builder()
-        .type(WsMessageType.CHAT)
-        .action(WsMessageAction.MESSAGE_RECEIVED)
-        .payload(message)
-        .build();
+    Set<WebSocketSession> sessions = sessionManager.getSessions(userId);
+    if (sessions != null && !sessions.isEmpty()) {
+      for (WebSocketSession session : sessions) {
+        if (session.isOpen()) {
+          WsMessage wsMessage = WsMessage.builder()
+            .type(WsMessageType.CHAT)
+            .action(WsMessageAction.MESSAGE_RECEIVED)
+            .payload(message)
+            .build();
 
-      String json = objectMapper.writeValueAsString(wsMessage);
-      session.sendMessage(new TextMessage(json));
+          String json = objectMapper.writeValueAsString(wsMessage);
+          session.sendMessage(new TextMessage(json));
+        }
+      }
     }
   }
 
-  private void sendChatConfirmation(WebSocketSession session, UUID roomId) throws IOException {
+  private void sendChatConfirmation(WebSocketSession session, String roomId) throws IOException {
     WsMessage confirmation = WsMessage.builder()
       .type(WsMessageType.CHAT)
       .action(WsMessageAction.MESSAGE_SENT)
-      .payload(objectMapper.createObjectNode().put("roomId", roomId.toString()))
+      .payload(objectMapper.createObjectNode().put("roomId", roomId))
       .build();
 
     String json = objectMapper.writeValueAsString(confirmation);
@@ -259,7 +266,7 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
   public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
     String userId = (String) session.getAttributes().get("userId");
     if (userId != null) {
-      sessionManager.removeSession(userId);
+      sessionManager.removeSession(userId, session);
       log.info("User {} disconnected from WebSocket", userId);
     }
   }

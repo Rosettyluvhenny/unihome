@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,10 +27,10 @@ public class RoomServiceImpl implements RoomService {
    * @return ChatRoom (existing or newly created)
    */
   @Transactional
-  public ChatRoom getOrCreatePrivateRoom(UUID userAId, UUID userBId) {
+  public ChatRoom getOrCreatePrivateRoom(String userAId, String userBId) {
     // Normalize user IDs (always put smaller ID first) to ensure consistency
-    UUID firstUserId = userAId.compareTo(userBId) < 0 ? userAId : userBId;
-    UUID secondUserId = userAId.compareTo(userBId) < 0 ? userBId : userAId;
+    String firstUserId = userAId.compareTo(userBId) < 0 ? userAId : userBId;
+    String secondUserId = userAId.compareTo(userBId) < 0 ? userBId : userAId;
 
     // Try to find existing room
     List<ChatRoom> existingRooms = chatRoomRepository.findByTypeAndUserAIdAndUserBId(
@@ -46,7 +45,6 @@ public class RoomServiceImpl implements RoomService {
 
     // Create new room if it doesn't exist
     ChatRoom newRoom = new ChatRoom();
-    newRoom.setId(UUID.randomUUID());
     newRoom.setType(ChatRoomType.PRIVATE);
     newRoom.setUserAId(firstUserId);
     newRoom.setUserBId(secondUserId);
@@ -64,7 +62,7 @@ public class RoomServiceImpl implements RoomService {
    * @return ChatRoom (existing or newly created)
    */
   @Transactional
-  public ChatRoom getOrCreateBotRoom(UUID userId, String botType) {
+  public ChatRoom getOrCreateBotRoom(String userId, String botType) {
     // Try to find existing room
     List<ChatRoom> existingRooms = chatRoomRepository.findByTypeAndUserAId(ChatRoomType.BOT, userId);
 
@@ -78,7 +76,6 @@ public class RoomServiceImpl implements RoomService {
 
     // Create new room if it doesn't exist
     ChatRoom newRoom = new ChatRoom();
-    newRoom.setId(UUID.randomUUID());
     newRoom.setType(ChatRoomType.BOT);
     newRoom.setUserAId(userId);
     newRoom.setBotType(botType);
@@ -94,9 +91,9 @@ public class RoomServiceImpl implements RoomService {
    * @param userBId Second user ID
    * @return Optional ChatRoom
    */
-  public Optional<ChatRoom> findPrivateRoom(UUID userAId, UUID userBId) {
-    UUID firstUserId = userAId.compareTo(userBId) < 0 ? userAId : userBId;
-    UUID secondUserId = userAId.compareTo(userBId) < 0 ? userBId : userAId;
+  public Optional<ChatRoom> findPrivateRoom(String userAId, String userBId) {
+    String firstUserId = userAId.compareTo(userBId) < 0 ? userAId : userBId;
+    String secondUserId = userAId.compareTo(userBId) < 0 ? userBId : userAId;
 
     List<ChatRoom> rooms = chatRoomRepository.findByTypeAndUserAIdAndUserBId(
       ChatRoomType.PRIVATE,
@@ -114,7 +111,7 @@ public class RoomServiceImpl implements RoomService {
    * @param botType Type of bot
    * @return Optional ChatRoom
    */
-  public Optional<ChatRoom> findBotRoom(UUID userId, String botType) {
+  public Optional<ChatRoom> findBotRoom(String userId, String botType) {
     List<ChatRoom> rooms = chatRoomRepository.findByTypeAndUserAId(ChatRoomType.BOT, userId);
 
     return rooms.stream()
@@ -131,7 +128,7 @@ public class RoomServiceImpl implements RoomService {
    * @param userId User ID to check
    * @return true if valid, false otherwise
    */
-  public boolean isValidRoomForUser(UUID roomId, UUID userId) {
+  public boolean isValidRoomForUser(String roomId, String userId) {
     Optional<ChatRoom> room = chatRoomRepository.findById(roomId);
 
     if (room.isEmpty()) {

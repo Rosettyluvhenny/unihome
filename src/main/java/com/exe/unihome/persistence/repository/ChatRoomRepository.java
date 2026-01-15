@@ -5,24 +5,23 @@ import com.exe.unihome.websocket.enums.ChatRoomType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
-import java.util.UUID;
 
-public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
+public interface ChatRoomRepository extends JpaRepository<ChatRoom, String> {
 
   /**
    * Find all chat rooms where the user is participant (either userAId or userBId)
    */
-  List<ChatRoom> findByUserAIdOrUserBId(UUID userAId, UUID userBId);
+  List<ChatRoom> findByUserAIdOrUserBId(String userAId, String userBId);
 
   /**
    * Find private chat room between two users
    */
-  List<ChatRoom> findByTypeAndUserAIdAndUserBId(ChatRoomType type, UUID userAId, UUID userBId);
+  List<ChatRoom> findByTypeAndUserAIdAndUserBId(ChatRoomType type, String userAId, String userBId);
 
   /**
    * Find bot chat room for a user
    */
-  List<ChatRoom> findByTypeAndUserAId(ChatRoomType type, UUID userAId);
+  List<ChatRoom> findByTypeAndUserAId(ChatRoomType type, String userAId);
 }
 
 

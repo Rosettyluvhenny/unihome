@@ -228,6 +228,11 @@ public class UserServiceImpl implements UserService {
     userRepository.deleteById(id);
   }
 
+  @Override
+  public boolean existById(String id) {
+    return userRepository.existsById(id);
+  }
+
   private UserResponse verificationMailQueue(String rawVerifyToken, User user) {
     MailJob mailJob = MailJob.builder()
       .jobId(UUID.randomUUID().toString())

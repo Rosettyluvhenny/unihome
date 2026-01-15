@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
-import java.util.UUID;
 
 @Entity
 @Table(name = "chat_room")
@@ -13,17 +12,18 @@ import java.util.UUID;
 public class ChatRoom {
 
   @Id
-  private UUID id;
+  @GeneratedValue(strategy = GenerationType.UUID)
+  private String id;
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   private ChatRoomType type;
 
   @Column(name = "user_a_id", nullable = false)
-  private UUID userAId;
+  private String userAId;
 
   @Column(name = "user_b_id")
-  private UUID userBId;
+  private String userBId;
 
   @Column(name = "bot_type")
   private String botType;

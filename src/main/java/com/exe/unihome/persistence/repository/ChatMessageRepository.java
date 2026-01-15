@@ -6,11 +6,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.Optional;
-import java.util.UUID;
 
-public interface ChatMessageRepository extends JpaRepository<ChatMessage, UUID> {
+public interface ChatMessageRepository extends JpaRepository<ChatMessage, String> {
 
-  Page<ChatMessage> findByRoomId(UUID roomId, Pageable pageable);
+  Page<ChatMessage> findByRoomId(String roomId, Pageable pageable);
 
-  Optional<ChatMessage> findTopByRoomIdOrderByCreatedAtDesc(UUID roomId);
+  Optional<ChatMessage> findTopByRoomIdOrderByCreatedAtDesc(String roomId);
 }

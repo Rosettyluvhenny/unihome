@@ -4,7 +4,7 @@ import com.exe.unihome.persistence.entity.notification.Notification;
 import com.exe.unihome.websocket.dto.WsMessage;
 import com.exe.unihome.websocket.enums.WsMessageAction;
 import com.exe.unihome.websocket.enums.WsMessageType;
-import com.exe.unihome.websocket.session.SessionRegistry;
+import com.exe.unihome.websocket.session.WsSessionManager;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ import org.springframework.web.socket.WebSocketSession;
 @Slf4j
 public class WebSocketNotificationPublisher {
 
-  private final SessionRegistry sessionRegistry;
+  private final WsSessionManager sessionRegistry;
   private final ObjectMapper objectMapper;
 
   public void push(Notification notification) {
@@ -42,11 +42,25 @@ public class WebSocketNotificationPublisher {
           .build();
 
         String json = objectMapper.writeValueAsString(wsMessage);
-        session.sendMessage(new TextMessage(json));
-        log.debug("Notification sent to user {} via WebSocket", notification.getUserId());
+        synchronized (session) {
+          session.sendMessage(new TextMessage(json));
+        }
+        log.debug(
+          "Notification sent to user {} via session {}",
+          notification.getUserId(),
+          session.getId()
+        );
+
       } catch (Exception e) {
-        log.warn("Failed to send notification to user {} via WebSocket", notification.getUserId(), e);
-        // ignore – reconnect handled elsewhere
+        // 3️⃣ Gửi fail → remove session
+        sessionRegistry.removeSession(notification.getUserId(), session);
+
+        log.warn(
+          "Failed to send notification to user {} via session {}",
+          notification.getUserId(),
+          session.getId(),
+          e
+        );
       }
     }
   }

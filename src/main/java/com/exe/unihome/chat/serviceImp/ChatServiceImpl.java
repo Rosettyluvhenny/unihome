@@ -20,7 +20,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -32,13 +31,12 @@ public class ChatServiceImpl implements ChatService {
   private final RoomServiceImpl roomService;
   private final ObjectMapper objectMapper;
 
-  public Optional<ChatRoom> findRoomById(UUID roomId) {
+  public Optional<ChatRoom> findRoomById(String roomId) {
     return chatRoomRepository.findById(roomId);
   }
 
-  public ChatMessage saveMessage(UUID roomId, UUID senderId, String content, SenderType senderType) {
+  public ChatMessage saveMessage(String roomId, String senderId, String content, SenderType senderType) {
     ChatMessage message = new ChatMessage();
-    message.setId(UUID.randomUUID());
     message.setRoomId(roomId);
     message.setSenderId(senderId);
     message.setContent(content);
@@ -47,25 +45,25 @@ public class ChatServiceImpl implements ChatService {
     return chatMessageRepository.save(message);
   }
 
-  public Page<ChatMessage> getMessagesByRoomId(UUID roomId, Pageable pageable) {
+  public Page<ChatMessage> getMessagesByRoomId(String roomId, Pageable pageable) {
     return chatMessageRepository.findByRoomId(roomId, pageable);
   }
 
-  public Optional<ChatMessage> getLastMessageByRoomId(UUID roomId) {
+  public Optional<ChatMessage> getLastMessageByRoomId(String roomId) {
     return chatMessageRepository.findTopByRoomIdOrderByCreatedAtDesc(roomId);
   }
 
   /**
    * Get all chat rooms for a user (both private and bot rooms).
    */
-  public List<ChatRoom> getAllChatRoomsByUserId(UUID userId) {
+  public List<ChatRoom> getAllChatRoomsByUserId(String userId) {
     return chatRoomRepository.findByUserAIdOrUserBId(userId, userId);
   }
 
   /**
    * Create a notification for a user when they receive a chat message but are offline.
    */
-  public void createChatNotification(String userId, UUID roomId, String senderId) {
+  public void createChatNotification(String userId, String roomId, String senderId) {
     ObjectNode payload = objectMapper.createObjectNode();
     payload.put("action", "NEW_CHAT_MESSAGE");
     payload.put("roomId", roomId.toString());
@@ -89,7 +87,7 @@ public class ChatServiceImpl implements ChatService {
    * @return ChatMessage (saved message with room automatically created/retrieved)
    */
   @Transactional
-  public ChatMessage sendPrivateMessage(UUID senderId, UUID recipientId, String content) {
+  public ChatMessage sendPrivateMessage(String senderId, String recipientId, String content) {
     // Get or create the private chat room
     ChatRoom room = roomService.getOrCreatePrivateRoom(senderId, recipientId);
 
@@ -107,7 +105,7 @@ public class ChatServiceImpl implements ChatService {
    * @return ChatMessage (saved message with room automatically created/retrieved)
    */
   @Transactional
-  public ChatMessage sendBotMessage(UUID userId, String botType, String content) {
+  public ChatMessage sendBotMessage(String userId, String botType, String content) {
     // Get or create the bot chat room
     ChatRoom room = roomService.getOrCreateBotRoom(userId, botType);
 
@@ -123,7 +121,7 @@ public class ChatServiceImpl implements ChatService {
    * @return ChatMessage (saved bot message)
    */
   @Transactional
-  public ChatMessage saveBotResponse(UUID roomId, String botContent) {
+  public ChatMessage saveBotResponse(String roomId, String botContent) {
     // Bot messages don't have a specific sender ID, so senderId can be null
     return saveMessage(roomId, null, botContent, SenderType.BOT);
   }
@@ -135,7 +133,7 @@ public class ChatServiceImpl implements ChatService {
    * @param userId ID of the user
    * @return true if user is participant of the room, false otherwise
    */
-  public boolean hasAccessToRoom(UUID roomId, UUID userId) {
+  public boolean hasAccessToRoom(String roomId, String userId) {
     return roomService.isValidRoomForUser(roomId, userId);
   }
 }

@@ -8,26 +8,25 @@ import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 
 public interface ChatService {
-  Optional<ChatRoom> findRoomById(UUID roomId);
+  Optional<ChatRoom> findRoomById(String roomId);
 
-  ChatMessage saveMessage(UUID roomId, UUID senderId, String content, SenderType senderType);
+  ChatMessage saveMessage(String roomId, String senderId, String content, SenderType senderType);
 
-  Page<ChatMessage> getMessagesByRoomId(UUID roomId, Pageable pageable);
+  Page<ChatMessage> getMessagesByRoomId(String roomId, Pageable pageable);
 
-  Optional<ChatMessage> getLastMessageByRoomId(UUID roomId);
+  Optional<ChatMessage> getLastMessageByRoomId(String roomId);
 
-  List<ChatRoom> getAllChatRoomsByUserId(UUID userId);
+  List<ChatRoom> getAllChatRoomsByUserId(String userId);
 
-  void createChatNotification(String userId, UUID roomId, String senderId);
+  void createChatNotification(String userId, String roomId, String senderId);
 
-  ChatMessage sendPrivateMessage(UUID senderId, UUID recipientId, String content);
+  ChatMessage sendPrivateMessage(String senderId, String recipientId, String content);
 
-  ChatMessage sendBotMessage(UUID userId, String botType, String content);
+  ChatMessage sendBotMessage(String userId, String botType, String content);
 
-  ChatMessage saveBotResponse(UUID roomId, String botContent);
+  ChatMessage saveBotResponse(String roomId, String botContent);
 
-  boolean hasAccessToRoom(UUID roomId, UUID userId);
+  boolean hasAccessToRoom(String roomId, String userId);
 }

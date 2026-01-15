@@ -8,7 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
-import java.util.UUID;
 
 /**
  * Response payload for a chat message received via WebSocket.
@@ -23,19 +22,19 @@ public class ChatMessageResponse {
    * Message ID
    */
   @JsonProperty("id")
-  private UUID id;
+  private String id;
 
   /**
    * Chat room ID
    */
   @JsonProperty("roomId")
-  private UUID roomId;
+  private String roomId;
 
   /**
    * Sender ID (userId or null for bot)
    */
   @JsonProperty("senderId")
-  private UUID senderId;
+  private String senderId;
 
   /**
    * Sender type: USER or BOT

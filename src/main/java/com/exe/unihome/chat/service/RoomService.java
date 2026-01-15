@@ -3,16 +3,15 @@ package com.exe.unihome.chat.service;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface RoomService {
-  Optional<ChatRoom> findBotRoom(UUID userId, String botType);
+  Optional<ChatRoom> findBotRoom(String userId, String botType);
 
-  Optional<ChatRoom> findPrivateRoom(UUID userAId, UUID userBId);
+  Optional<ChatRoom> findPrivateRoom(String userAId, String userBId);
 
-  ChatRoom getOrCreateBotRoom(UUID userId, String botType);
+  ChatRoom getOrCreateBotRoom(String userId, String botType);
 
-  ChatRoom getOrCreatePrivateRoom(UUID userAId, UUID userBId);
+  ChatRoom getOrCreatePrivateRoom(String userAId, String userBId);
 
-  boolean isValidRoomForUser(UUID roomId, UUID userId);
+  boolean isValidRoomForUser(String roomId, String userId);
 }
