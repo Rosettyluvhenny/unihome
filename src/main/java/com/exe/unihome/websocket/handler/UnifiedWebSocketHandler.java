@@ -87,13 +87,6 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
             sendSystemError(session, 400, "Invalid action for CHAT type: " + actionStr);
           }
           break;
-        case NOTIFICATION:
-          if (action.isNotificationAction()) {
-            handleNotificationAction(action, jsonNode, session, userId);
-          } else {
-            sendSystemError(session, 400, "Invalid action for NOTIFICATION type: " + actionStr);
-          }
-          break;
         case SYSTEM:
           sendSystemError(session, 400, "Cannot send SYSTEM type messages");
           break;
@@ -116,16 +109,6 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
     }
   }
 
-  private void handleNotificationAction(WsMessageAction action, JsonNode jsonNode, WebSocketSession session, String userId) throws Exception {
-    switch (action) {
-      case MARK_READ:
-        // TODO: Implement mark notification as read
-        sendSystemError(session, 501, "Action not implemented yet");
-        break;
-      default:
-        sendSystemError(session, 400, "Unknown notification action: " + action.getValue());
-    }
-  }
 
   /**
    * Handle SEND_MESSAGE action:
