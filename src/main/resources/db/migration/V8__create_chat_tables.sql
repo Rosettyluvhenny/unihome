@@ -21,6 +21,6 @@ CREATE TABLE chat_message
 	sender_type VARCHAR(10) NOT NULL CHECK (sender_type IN ('USER', 'BOT')),
 	sender_id   UUID,
 	content     TEXT        NOT NULL,
-	created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-	read boolean default false
+	created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	read        boolean   default false
 );

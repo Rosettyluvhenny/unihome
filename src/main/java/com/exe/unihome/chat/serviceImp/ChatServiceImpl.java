@@ -1,5 +1,6 @@
-package com.exe.unihome.service;
+package com.exe.unihome.chat.serviceImp;
 
+import com.exe.unihome.chat.service.ChatService;
 import com.exe.unihome.notification.NotificationChannel;
 import com.exe.unihome.notification.NotificationType;
 import com.exe.unihome.notification.service.NotificationService;
@@ -23,12 +24,12 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class ChatService {
+public class ChatServiceImpl implements ChatService {
 
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageRepository chatMessageRepository;
   private final NotificationService notificationService;
-  private final RoomService roomService;
+  private final RoomServiceImpl roomService;
   private final ObjectMapper objectMapper;
 
   public Optional<ChatRoom> findRoomById(UUID roomId) {

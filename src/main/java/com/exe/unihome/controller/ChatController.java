@@ -1,8 +1,8 @@
 package com.exe.unihome.controller;
 
+import com.exe.unihome.chat.serviceImp.ChatServiceImpl;
 import com.exe.unihome.persistence.entity.chat.ChatMessage;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
-import com.exe.unihome.service.ChatService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,7 +21,7 @@ import java.util.UUID;
 @RequestMapping("/chat")
 public class ChatController {
 
-  private final ChatService chatService;
+  private final ChatServiceImpl chatService;
 
   /**
    * Get all chat rooms for the authenticated user (both private and bot).

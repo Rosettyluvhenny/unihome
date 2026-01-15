@@ -1,5 +1,6 @@
-package com.exe.unihome.service;
+package com.exe.unihome.chat.serviceImp;
 
+import com.exe.unihome.chat.service.RoomService;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
 import com.exe.unihome.persistence.repository.ChatRoomRepository;
 import com.exe.unihome.websocket.enums.ChatRoomType;
@@ -14,7 +15,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class RoomService {
+public class RoomServiceImpl implements RoomService {
 
   private final ChatRoomRepository chatRoomRepository;
 
@@ -34,7 +35,7 @@ public class RoomService {
 
     // Try to find existing room
     List<ChatRoom> existingRooms = chatRoomRepository.findByTypeAndUserAIdAndUserBId(
-      ChatRoomType.PRIVATE.getValue(),
+      ChatRoomType.PRIVATE,
       firstUserId,
       secondUserId
     );
@@ -65,7 +66,7 @@ public class RoomService {
   @Transactional
   public ChatRoom getOrCreateBotRoom(UUID userId, String botType) {
     // Try to find existing room
-    List<ChatRoom> existingRooms = chatRoomRepository.findByTypeAndUserAId(ChatRoomType.BOT.getValue(), userId);
+    List<ChatRoom> existingRooms = chatRoomRepository.findByTypeAndUserAId(ChatRoomType.BOT, userId);
 
     Optional<ChatRoom> matchingRoom = existingRooms.stream()
       .filter(room -> botType.equals(room.getBotType()))
@@ -98,7 +99,7 @@ public class RoomService {
     UUID secondUserId = userAId.compareTo(userBId) < 0 ? userBId : userAId;
 
     List<ChatRoom> rooms = chatRoomRepository.findByTypeAndUserAIdAndUserBId(
-      ChatRoomType.PRIVATE.getValue(),
+      ChatRoomType.PRIVATE,
       firstUserId,
       secondUserId
     );
@@ -114,7 +115,7 @@ public class RoomService {
    * @return Optional ChatRoom
    */
   public Optional<ChatRoom> findBotRoom(UUID userId, String botType) {
-    List<ChatRoom> rooms = chatRoomRepository.findByTypeAndUserAId(ChatRoomType.BOT.getValue(), userId);
+    List<ChatRoom> rooms = chatRoomRepository.findByTypeAndUserAId(ChatRoomType.BOT, userId);
 
     return rooms.stream()
       .filter(room -> botType.equals(room.getBotType()))

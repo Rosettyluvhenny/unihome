@@ -1,6 +1,7 @@
 package com.exe.unihome.persistence.repository;
 
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
+import com.exe.unihome.websocket.enums.ChatRoomType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -16,12 +17,12 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, UUID> {
   /**
    * Find private chat room between two users
    */
-  List<ChatRoom> findByTypeAndUserAIdAndUserBId(String type, UUID userAId, UUID userBId);
+  List<ChatRoom> findByTypeAndUserAIdAndUserBId(ChatRoomType type, UUID userAId, UUID userBId);
 
   /**
    * Find bot chat room for a user
    */
-  List<ChatRoom> findByTypeAndUserAId(String type, UUID userAId);
+  List<ChatRoom> findByTypeAndUserAId(ChatRoomType type, UUID userAId);
 }
 
 

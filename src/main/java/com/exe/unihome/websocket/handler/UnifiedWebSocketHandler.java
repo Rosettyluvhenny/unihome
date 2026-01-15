@@ -1,7 +1,7 @@
 package com.exe.unihome.websocket.handler;
 
-import com.exe.unihome.service.BotService;
-import com.exe.unihome.service.ChatService;
+import com.exe.unihome.chat.serviceImp.BotServiceImpl;
+import com.exe.unihome.chat.serviceImp.ChatServiceImpl;
 import com.exe.unihome.websocket.WsSessionManager;
 import com.exe.unihome.websocket.dto.ChatMessageResponse;
 import com.exe.unihome.websocket.dto.SendChatMessageRequest;
@@ -34,8 +34,8 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
 
   private final ObjectMapper objectMapper;
   private final WsSessionManager sessionManager;
-  private final ChatService chatService;
-  private final BotService botService;
+  private final ChatServiceImpl chatService;
+  private final BotServiceImpl botService;
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -62,20 +62,19 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
     }
 
     try {
+      WsMessage msg = objectMapper.readValue(message.getPayload(), WsMessage.class);
       JsonNode jsonNode = objectMapper.readTree(message.getPayload());
-      String typeStr = jsonNode.get("type").asText();
-      String actionStr = jsonNode.get("action").asText();
+      WsMessageAction action = msg.getAction();
+      WsMessageType type = msg.getType();
 
-      WsMessageType type = WsMessageType.fromValue(typeStr);
-      WsMessageAction action = WsMessageAction.fromValue(actionStr);
 
       if (type == null) {
-        sendSystemError(session, 400, "Unknown message type: " + typeStr);
+        sendSystemError(session, 400, "Unknown message type: ");
         return;
       }
 
       if (action == null) {
-        sendSystemError(session, 400, "Unknown action: " + actionStr);
+        sendSystemError(session, 400, "Unknown action: ");
         return;
       }
 
@@ -84,14 +83,14 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
           if (action.isChatAction()) {
             handleChatAction(action, jsonNode, session, userId);
           } else {
-            sendSystemError(session, 400, "Invalid action for CHAT type: " + actionStr);
+            sendSystemError(session, 400, "Invalid action for CHAT type: ");
           }
           break;
         case SYSTEM:
           sendSystemError(session, 400, "Cannot send SYSTEM type messages");
           break;
         default:
-          sendSystemError(session, 400, "Unhandled message type: " + typeStr);
+          sendSystemError(session, 400, "Unhandled message type: ");
       }
     } catch (Exception e) {
       log.error("Error handling WebSocket message", e);

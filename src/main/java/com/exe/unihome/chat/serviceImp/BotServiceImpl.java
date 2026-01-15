@@ -1,5 +1,6 @@
-package com.exe.unihome.service;
+package com.exe.unihome.chat.serviceImp;
 
+import com.exe.unihome.chat.service.BotService;
 import org.springframework.stereotype.Service;
 
 import java.util.Random;
@@ -9,7 +10,7 @@ import java.util.Random;
  * This is a demo implementation that returns predefined responses.
  */
 @Service
-public class BotService {
+public class BotServiceImpl implements BotService {
 
   private static final String[] BOT_RESPONSES = {
     "That's an interesting question! I'll need more information to help you better.",
