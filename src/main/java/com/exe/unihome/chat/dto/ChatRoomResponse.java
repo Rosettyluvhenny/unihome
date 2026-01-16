@@ -20,7 +20,6 @@ public class ChatRoomResponse {
 
   private LocalDateTime createdAt;
 
-  private LocalDateTime lastMessage;
 
   private List<UserSummary> participant = new ArrayList<>();
 }

@@ -20,7 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,7 +45,7 @@ public class ChatServiceImpl implements ChatService {
     message.setSenderId(senderId);
     message.setContent(content);
     message.setSenderType(senderType);
-    message.setCreatedAt(Instant.now());
+    message.setCreatedAt(LocalDateTime.now());
     return chatMessageRepository.save(message);
   }
 
@@ -65,14 +65,14 @@ public class ChatServiceImpl implements ChatService {
    * @return List of messages ordered by creation time (newest first)
    * @throws AppException if user doesn't have access to the room
    */
-  public List<ChatMessage> loadMessagesByCursor(String roomId, String userId, Instant before, String beforeId, int limit) {
+  public List<ChatMessage> loadMessagesByCursor(String roomId, String userId, LocalDateTime before, String beforeId, int limit) {
     // Validate user has access to this room
     if (!hasAccessToRoom(roomId, userId)) {
       throw new AppException(ErrorCode.UNAUTHORIZED);
     }
 
     // Use current time if before is not specified
-    Instant cursorTime = before != null ? before : Instant.now();
+    LocalDateTime cursorTime = before != null ? before : LocalDateTime.now();
 
     // Load messages before the cursor time
     if (beforeId != null) {

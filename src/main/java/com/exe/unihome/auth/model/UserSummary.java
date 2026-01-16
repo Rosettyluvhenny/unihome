@@ -12,5 +12,5 @@ import lombok.NoArgsConstructor;
 public class UserSummary {
   String id;
   String fullName;
-  String img;
+  String image;
 }

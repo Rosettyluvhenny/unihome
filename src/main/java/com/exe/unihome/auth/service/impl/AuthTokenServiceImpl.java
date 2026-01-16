@@ -21,8 +21,8 @@ import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
@@ -88,23 +88,26 @@ public class AuthTokenServiceImpl implements AuthTokenService {
       // Create JWS Header
       JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
+      // ...existing code...
+      LocalDateTime now = LocalDateTime.now();
+      LocalDateTime expiresAt = now.plus(getValidDuration(), ChronoUnit.SECONDS);
+
       // Create JWT Claims
       JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
         .subject(user.getEmail())
         .issuer("exe2.com")
-        .issueTime(Date.from(Instant.now()))
-        .expirationTime(new Date(Instant.now().plus(getValidDuration(), ChronoUnit.SECONDS).toEpochMilli()))
+        .issueTime(convertToDate(now))
+        .expirationTime(convertToDate(expiresAt))
         .jwtID(UUID.randomUUID().toString())
         .claim("role", user.getRole())
         .claim("userId", user.getId())
         .build();
 
-      // Create Payload
+      // ...existing code...
       Payload payload = new Payload(jwtClaimsSet.toJSONObject());
 
       // Create JWS Object
       JWSObject jwsObject = new JWSObject(header, payload);
-
       // Sign the JWS object using HMAC-SHA512
       jwsObject.sign(new MACSigner((getSigningKey())));
 
@@ -172,6 +175,13 @@ public class AuthTokenServiceImpl implements AuthTokenService {
 
   private String getSigningKey() {
     return jwtProperties.getSignerKey();
+  }
+
+  /**
+   * Convert LocalDateTime to Date for JWT operations
+   */
+  private Date convertToDate(LocalDateTime localDateTime) {
+    return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
   }
 
   private record TokenParts(String id, String secret) {

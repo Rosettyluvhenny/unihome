@@ -4,7 +4,7 @@ import com.exe.unihome.websocket.enums.SenderType;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_message")
@@ -29,5 +29,5 @@ public class ChatMessage {
   private String content;
 
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Instant createdAt;
+  private LocalDateTime createdAt;
 }

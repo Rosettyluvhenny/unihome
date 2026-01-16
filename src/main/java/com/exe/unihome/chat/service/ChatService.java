@@ -6,7 +6,7 @@ import com.exe.unihome.websocket.enums.SenderType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -28,7 +28,7 @@ public interface ChatService {
    * @param limit    Maximum number of messages to return
    * @return List of messages
    */
-  List<ChatMessage> loadMessagesByCursor(String roomId, String userId, Instant before, String beforeId, int limit);
+  List<ChatMessage> loadMessagesByCursor(String roomId, String userId, LocalDateTime before, String beforeId, int limit);
 
   Optional<ChatMessage> getLastMessageByRoomId(String roomId);
 

@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -48,7 +48,7 @@ public class ChatController {
    * <p>
    * Example:
    * GET /chat/rooms/{roomId}/messages?limit=20
-   * GET /chat/rooms/{roomId}/messages?before=2024-01-16T10:30:00Z&beforeId=abc123&limit=20
+   * GET /chat/rooms/{roomId}/messages?before=2024-01-16T10:30:00&beforeId=abc123&limit=20
    *
    * @param roomId   ID of the chat room
    * @param before   Timestamp cursor (ISO-8601 format) - messages created before this time
@@ -59,7 +59,7 @@ public class ChatController {
   @GetMapping("/rooms/{roomId}/load-messages")
   public ResponseEntity<List<ChatMessage>> loadMessages(
     @PathVariable String roomId,
-    @RequestParam(required = false) Instant before,
+    @RequestParam(required = false) LocalDateTime before,
     @RequestParam(required = false) String beforeId,
     @RequestParam(defaultValue = "20") int limit
   ) {

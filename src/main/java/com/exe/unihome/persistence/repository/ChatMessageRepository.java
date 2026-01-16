@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -27,10 +27,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
    * @param limit  Maximum number of messages to return
    * @return List of messages
    */
-  @Query(nativeQuery = true, value = "SELECT * FROM chat_message WHERE CAST(room_id AS VARCHAR) = :roomId AND created_at < :before ORDER BY created_at DESC LIMIT :limit")
+  @Query(nativeQuery = true, value = "SELECT * FROM unihome.chat_message WHERE CAST(room_id AS VARCHAR) = :roomId AND created_at < :before ORDER BY created_at DESC LIMIT :limit")
   List<ChatMessage> findMessagesBeforeCursor(
     @Param("roomId") String roomId,
-    @Param("before") Instant before,
+    @Param("before") LocalDateTime before,
     @Param("limit") int limit
   );
 
@@ -41,7 +41,7 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, String
    * @param limit  Maximum number of messages to return
    * @return List of most recent messages
    */
-  @Query(nativeQuery = true, value = "SELECT * FROM chat_message WHERE CAST(room_id AS VARCHAR) = :roomId ORDER BY created_at DESC LIMIT :limit")
+  @Query(nativeQuery = true, value = "SELECT * FROM unihome.chat_message WHERE CAST(room_id AS VARCHAR) = :roomId ORDER BY created_at DESC LIMIT :limit")
   List<ChatMessage> findRecentMessages(
     @Param("roomId") String roomId,
     @Param("limit") int limit

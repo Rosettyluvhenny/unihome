@@ -8,7 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,7 +55,7 @@ public class ChatMessageResponse {
    * Timestamp when message was created
    */
   @JsonProperty("createdAt")
-  private Instant createdAt;
+  private LocalDateTime createdAt;
 
   @JsonProperty("participant")
   private List<UserSummary> participant = new ArrayList<>();
