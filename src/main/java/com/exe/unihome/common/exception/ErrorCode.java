@@ -30,6 +30,9 @@ public enum ErrorCode {
   FURNITURE_NOT_FOUND(2001, "Furniture not found", HttpStatus.NOT_FOUND),
   DISCOUNT_ALREADY_APPLIED(2002, "Discount already applied to this furniture", HttpStatus.BAD_REQUEST),
   DISCOUNT_NOT_FOUND(2003, "Discount not found", HttpStatus.NOT_FOUND),
+  CART_NOT_FOUND(3000, "Cart not found", HttpStatus.NOT_FOUND),
+  CART_ITEM_NOT_FOUND(3001, "Cart item not found", HttpStatus.NOT_FOUND),
+  CART_ITEM_EXISTS(3002, "Furniture already in cart", HttpStatus.BAD_REQUEST),
   ;
 
   private final int code;
