@@ -35,6 +35,8 @@ public interface UserService {
   UserResponse changePassword(String userId, ChangePasswordRequest request);
 
   void deleteUser(String id);
-  
+
   boolean existById(String id);
+
+  UserSummary toSummary(UserResponse rs);
 }

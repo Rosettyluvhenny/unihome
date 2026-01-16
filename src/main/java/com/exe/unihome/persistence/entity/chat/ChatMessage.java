@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 
 import java.time.Instant;
+import java.util.UUID;
 
 @Entity
 @Table(name = "chat_message")
@@ -12,25 +13,21 @@ import java.time.Instant;
 public class ChatMessage {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.UUID)
-  private String id;
+  private UUID id;
 
   @Column(name = "room_id", nullable = false)
-  private String roomId;
+  private UUID roomId;
 
   @Column(name = "sender_type", nullable = false)
   @Enumerated(EnumType.STRING)
   private SenderType senderType;
 
   @Column(name = "sender_id")
-  private String senderId;
+  private UUID senderId;
 
   @Column(nullable = false)
   private String content;
 
   @Column(name = "created_at", nullable = false, updatable = false)
   private Instant createdAt;
-
-  @Column(name = "read", nullable = false)
-  private boolean read;
 }

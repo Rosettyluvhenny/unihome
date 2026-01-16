@@ -13,7 +13,9 @@ public interface NotificationService {
 
   ApiResponse<Page<Notification>> getAllNotificationsByUserIdAndUnread(Pageable pageable);
 
-  ApiResponse<Page<Notification>> getLatestNotificationsByUserIdAndUnread(Pageable pageable);
+  ApiResponse<Page<Notification>> getAll(Pageable pageable);
 
   ApiResponse<Notification> createforTest(NotificationRequest request);
+
+  ApiResponse markRead(String id);
 }

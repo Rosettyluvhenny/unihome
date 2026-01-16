@@ -1,6 +1,11 @@
 package com.exe.unihome.chat.serviceImp;
 
+import com.exe.unihome.auth.model.UserSummary;
+import com.exe.unihome.auth.service.UserService;
+import com.exe.unihome.chat.dto.ChatRoomResponse;
+import com.exe.unihome.chat.mapper.RoomMapper;
 import com.exe.unihome.chat.service.RoomService;
+import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
 import com.exe.unihome.persistence.repository.ChatRoomRepository;
 import com.exe.unihome.websocket.enums.ChatRoomType;
@@ -8,7 +13,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -17,6 +21,8 @@ import java.util.Optional;
 public class RoomServiceImpl implements RoomService {
 
   private final ChatRoomRepository chatRoomRepository;
+  private final RoomMapper roomMapper;
+  private final UserService userService;
 
   /**
    * Get or create a PRIVATE chat room between two users.
@@ -48,7 +54,6 @@ public class RoomServiceImpl implements RoomService {
     newRoom.setType(ChatRoomType.PRIVATE);
     newRoom.setUserAId(firstUserId);
     newRoom.setUserBId(secondUserId);
-    newRoom.setCreatedAt(Instant.now());
 
     return chatRoomRepository.save(newRoom);
   }
@@ -79,7 +84,6 @@ public class RoomServiceImpl implements RoomService {
     newRoom.setType(ChatRoomType.BOT);
     newRoom.setUserAId(userId);
     newRoom.setBotType(botType);
-    newRoom.setCreatedAt(Instant.now());
 
     return chatRoomRepository.save(newRoom);
   }
@@ -147,5 +151,24 @@ public class RoomServiceImpl implements RoomService {
 
     return false;
   }
+
+  public Optional<ChatRoom> findById(String id) {
+    return chatRoomRepository.findById(id);
+  }
+
+  @Override
+  public ApiResponse<ChatRoomResponse> toApiResponse(ChatRoom room) {
+    ChatRoomResponse rs = roomMapper.toResponse(room);
+    UserSummary userA = userService.toSummary(userService.getUserById(room.getUserAId()));
+    UserSummary userB = userService.toSummary(userService.getUserById(room.getUserBId()));
+    rs.setParticipant(List.of(userA, userB));
+    return ApiResponse.<ChatRoomResponse>builder()
+      .code(200)
+      .message("Fetch successful")
+      .data(rs)
+      .build();
+  }
+
+
 }
 

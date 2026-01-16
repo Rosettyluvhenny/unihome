@@ -1,7 +1,10 @@
 package com.exe.unihome.websocket.handler;
 
+import com.exe.unihome.auth.model.UserSummary;
+import com.exe.unihome.auth.service.UserService;
 import com.exe.unihome.chat.serviceImp.BotServiceImpl;
 import com.exe.unihome.chat.serviceImp.ChatServiceImpl;
+import com.exe.unihome.persistence.entity.chat.ChatRoom;
 import com.exe.unihome.websocket.dto.ChatMessageResponse;
 import com.exe.unihome.websocket.dto.SendChatMessageRequest;
 import com.exe.unihome.websocket.dto.SystemMessage;
@@ -20,6 +23,8 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -36,6 +41,7 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
   private final WsSessionManager sessionManager;
   private final ChatServiceImpl chatService;
   private final BotServiceImpl botService;
+  private final UserService userService;
 
   @Override
   public void afterConnectionEstablished(WebSocketSession session) throws Exception {
@@ -158,21 +164,22 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
 
   private void handleUserToUserMessage(SendChatMessageRequest request, WebSocketSession session, String userId, String senderId) throws IOException {
     // Auto-create or retrieve private room
-    var chatRoom = chatService.sendPrivateMessage(senderId, request.getRecipientId(), request.getContent()).getRoomId();
+    var chatRoom = chatService.sendPrivateMessage(senderId, request.getRecipientId(), request.getContent()).getRoom();
 
     // Get the message that was just saved
-    var message = chatService.getLastMessageByRoomId(chatRoom);
+    var message = chatService.getLastMessageByRoomId(chatRoom.getId());
     if (message.isEmpty()) {
       return;
     }
 
     ChatMessageResponse response = ChatMessageResponse.builder()
       .id(message.get().getId())
-      .roomId(chatRoom)
+      .roomId(chatRoom.getId())
       .senderId(message.get().getSenderId())
       .senderType(message.get().getSenderType())
       .content(message.get().getContent())
       .createdAt(message.get().getCreatedAt())
+      .participant(getParticipants(chatRoom))
       .build();
 
     String recipientId = request.getRecipientId();
@@ -183,17 +190,17 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
       pushChatMessage(recipientId, response);
     } else {
       // Create notification for offline user
-      chatService.createChatNotification(recipientId, chatRoom, userId);
+      chatService.createChatNotification(recipientId, chatRoom.getId(), userId);
     }
 
     // Send confirmation to sender
-    sendChatConfirmation(session, chatRoom);
+    sendChatConfirmation(session, chatRoom.getId());
   }
 
   private void handleUserToBotMessage(SendChatMessageRequest request, WebSocketSession session, String userId, String senderId) throws IOException {
     // Auto-create or retrieve bot room
     var botMessage = chatService.sendBotMessage(senderId, request.getBotType(), request.getContent());
-    String roomId = botMessage.getRoomId();
+    String roomId = botMessage.getRoom().getId();
 
     // Generate bot response
     String botResponse = botService.generateBotResponse(request.getContent());
@@ -204,7 +211,7 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
     // Push bot response to user
     ChatMessageResponse response = ChatMessageResponse.builder()
       .id(savedBotMessage.getId())
-      .roomId(roomId)
+      .roomId(botMessage.getRoom().getId())
       .senderId(savedBotMessage.getSenderId())
       .senderType(savedBotMessage.getSenderType())
       .content(savedBotMessage.getContent())
@@ -269,5 +276,12 @@ public class UnifiedWebSocketHandler extends TextWebSocketHandler {
       sessionManager.removeSession(userId, session);
       log.info("User {} disconnected from WebSocket", userId);
     }
+  }
+
+  private ArrayList<UserSummary> getParticipants(ChatRoom room) {
+    UserSummary userA = userService.toSummary(userService.getUserById(room.getUserAId()));
+    UserSummary userB = userService.toSummary(userService.getUserById(room.getUserAId()));
+
+    return new ArrayList<>(List.of(userA, userB));
   }
 }

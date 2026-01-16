@@ -1,5 +1,7 @@
 package com.exe.unihome.notification.service;
 
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.notification.NotificationChannel;
 import com.exe.unihome.notification.NotificationRequest;
@@ -56,12 +58,12 @@ public class NotificationServiceImpl implements NotificationService {
       .build();
   }
 
-  public ApiResponse<Page<Notification>> getLatestNotificationsByUserIdAndUnread(Pageable pageable) {
+  public ApiResponse<Page<Notification>> getAll(Pageable pageable) {
     String userId = SecurityContextHolder.getContext().getAuthentication().getName();
     return ApiResponse.<Page<Notification>>builder()
       .message("Message loaded")
       .code(200)
-      .data(repository.findTopByUserIdAndReadFalseOrderByCreatedAtDesc(userId, pageable))
+      .data(repository.findAllByUserId(userId, pageable))
       .build();
   }
 
@@ -72,6 +74,17 @@ public class NotificationServiceImpl implements NotificationService {
       .message("Message loaded")
       .code(200)
       .data(createNotification(rq.getUserId(), rq.getTitle(), rq.getType(), rq.getChannel()))
+      .build();
+  }
+
+  @Override
+  public ApiResponse markRead(String id) {
+    Notification noti = repository.findById(id).orElseThrow(() -> new AppException(ErrorCode.NOTI_NOT_FOUND));
+    noti.setRead(true);
+    repository.save(noti);
+    return ApiResponse.builder()
+      .code(200)
+      .message("Mark read successfully")
       .build();
   }
 

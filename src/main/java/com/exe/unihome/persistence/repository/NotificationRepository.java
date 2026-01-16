@@ -9,5 +9,5 @@ public interface NotificationRepository extends JpaRepository<Notification, Stri
 
   Page<Notification> findByUserIdAndReadFalseOrderByCreatedAtDesc(String userId, Pageable pageable);
 
-  Page<Notification> findTopByUserIdAndReadFalseOrderByCreatedAtDesc(String userId, Pageable pageable);
+  Page<Notification> findAllByUserId(String userId, Pageable pageable);
 }

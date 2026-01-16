@@ -1,5 +1,6 @@
 package com.exe.unihome.websocket.dto;
 
+import com.exe.unihome.auth.model.UserSummary;
 import com.exe.unihome.websocket.enums.SenderType;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Response payload for a chat message received via WebSocket.
@@ -53,5 +56,8 @@ public class ChatMessageResponse {
    */
   @JsonProperty("createdAt")
   private Instant createdAt;
+
+  @JsonProperty("participant")
+  private List<UserSummary> participant = new ArrayList<>();
 }
 

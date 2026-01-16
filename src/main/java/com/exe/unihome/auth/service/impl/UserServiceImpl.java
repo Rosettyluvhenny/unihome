@@ -8,7 +8,6 @@ import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.mail.model.MailJob;
 import com.exe.unihome.mail.service.MailQueueService;
-import com.exe.unihome.mail.service.MailService;
 import com.exe.unihome.persistence.entity.identityAndAuth.RoleName;
 import com.exe.unihome.persistence.entity.identityAndAuth.Status;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
@@ -33,7 +32,6 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
   private final VerifyTokenService verifyTokenService;
-  private final MailService mailService;
   private final MailQueueService mailQueueService;
 
   @Override
@@ -156,7 +154,7 @@ public class UserServiceImpl implements UserService {
       .phone(userCreateRequest.getPhone())
       .address(userCreateRequest.getAddress())
       .image(userCreateRequest.getImage())
-      .status(Status.ACTIVE)
+      .status(userCreateRequest.getStatus())
       .role(role)
       .build();
 
@@ -186,6 +184,9 @@ public class UserServiceImpl implements UserService {
       user.setImage(userRequest.getImage());
     }
 
+    if (userRequest.getStatus() != null) {
+      user.setStatus(userRequest.getStatus());
+    }
     User updatedUser = userRepository.save(user);
     return userMapper.toResponse(updatedUser);
   }
@@ -247,6 +248,10 @@ public class UserServiceImpl implements UserService {
     mailQueueService.enqueue(mailJob);
 
     return userMapper.toResponse(user);
+  }
+
+  public UserSummary toSummary(UserResponse userResponse) {
+    return userMapper.ResponsetoSummary(userResponse);
   }
 }
 

@@ -1,6 +1,9 @@
 package com.exe.unihome.chat.serviceImp;
 
 import com.exe.unihome.chat.service.ChatService;
+import com.exe.unihome.chat.service.RoomService;
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.notification.NotificationChannel;
 import com.exe.unihome.notification.NotificationType;
 import com.exe.unihome.notification.service.NotificationService;
@@ -28,7 +31,7 @@ public class ChatServiceImpl implements ChatService {
   private final ChatRoomRepository chatRoomRepository;
   private final ChatMessageRepository chatMessageRepository;
   private final NotificationService notificationService;
-  private final RoomServiceImpl roomService;
+  private final RoomService roomService;
   private final ObjectMapper objectMapper;
 
   public Optional<ChatRoom> findRoomById(String roomId) {
@@ -36,8 +39,9 @@ public class ChatServiceImpl implements ChatService {
   }
 
   public ChatMessage saveMessage(String roomId, String senderId, String content, SenderType senderType) {
+    ChatRoom room = roomService.findById(roomId).orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
     ChatMessage message = new ChatMessage();
-    message.setRoomId(roomId);
+    message.setRoom(room);
     message.setSenderId(senderId);
     message.setContent(content);
     message.setSenderType(senderType);
@@ -66,7 +70,7 @@ public class ChatServiceImpl implements ChatService {
   public void createChatNotification(String userId, String roomId, String senderId) {
     ObjectNode payload = objectMapper.createObjectNode();
     payload.put("action", "NEW_CHAT_MESSAGE");
-    payload.put("roomId", roomId.toString());
+    payload.put("roomId", roomId);
     payload.put("senderId", senderId);
 
     notificationService.createNotification(

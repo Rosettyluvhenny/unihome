@@ -3,8 +3,9 @@ package com.exe.unihome.persistence.entity.chat;
 import com.exe.unihome.websocket.enums.ChatRoomType;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.data.annotation.CreatedDate;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "chat_room")
@@ -28,6 +29,8 @@ public class ChatRoom {
   @Column(name = "bot_type")
   private String botType;
 
+  @CreatedDate
   @Column(name = "created_at", nullable = false, updatable = false)
-  private Instant createdAt;
+  private LocalDateTime createdAt;
+  
 }

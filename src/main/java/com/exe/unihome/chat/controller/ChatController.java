@@ -1,6 +1,6 @@
-package com.exe.unihome.controller;
+package com.exe.unihome.chat.controller;
 
-import com.exe.unihome.chat.serviceImp.ChatServiceImpl;
+import com.exe.unihome.chat.service.ChatService;
 import com.exe.unihome.persistence.entity.chat.ChatMessage;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
 import lombok.RequiredArgsConstructor;
@@ -20,7 +20,7 @@ import java.util.List;
 @RequestMapping("/chat")
 public class ChatController {
 
-  private final ChatServiceImpl chatService;
+  private final ChatService chatService;
 
   /**
    * Get all chat rooms for the authenticated user (both private and bot).
@@ -43,4 +43,6 @@ public class ChatController {
     Page<ChatMessage> messages = chatService.getMessagesByRoomId(roomId, pageable);
     return ResponseEntity.ok(messages);
   }
+
+
 }
