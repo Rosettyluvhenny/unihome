@@ -8,11 +8,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -44,5 +42,34 @@ public class ChatController {
     return ResponseEntity.ok(messages);
   }
 
+  /**
+   * Load messages using cursor-based pagination.
+   * Supports loading messages before a specific timestamp and message ID.
+   * <p>
+   * Example:
+   * GET /chat/rooms/{roomId}/messages?limit=20
+   * GET /chat/rooms/{roomId}/messages?before=2024-01-16T10:30:00Z&beforeId=abc123&limit=20
+   *
+   * @param roomId   ID of the chat room
+   * @param before   Timestamp cursor (ISO-8601 format) - messages created before this time
+   * @param beforeId Message ID cursor (reserved for future use with composite cursors)
+   * @param limit    Maximum number of messages to return (default: 20, max: 100)
+   * @return List of messages ordered by creation time (newest first)
+   */
+  @GetMapping("/rooms/{roomId}/load-messages")
+  public ResponseEntity<List<ChatMessage>> loadMessages(
+    @PathVariable String roomId,
+    @RequestParam(required = false) Instant before,
+    @RequestParam(required = false) String beforeId,
+    @RequestParam(defaultValue = "20") int limit
+  ) {
+    // Limit maximum to prevent abuse
+    if (limit > 100) {
+      limit = 100;
+    }
 
+    String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+    List<ChatMessage> messages = chatService.loadMessagesByCursor(roomId, userId, before, beforeId, limit);
+    return ResponseEntity.ok(messages);
+  }
 }

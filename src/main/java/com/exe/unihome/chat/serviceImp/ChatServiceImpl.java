@@ -41,7 +41,7 @@ public class ChatServiceImpl implements ChatService {
   public ChatMessage saveMessage(String roomId, String senderId, String content, SenderType senderType) {
     ChatRoom room = roomService.findById(roomId).orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
     ChatMessage message = new ChatMessage();
-    message.setRoom(room);
+    message.setRoomId(room.getId());
     message.setSenderId(senderId);
     message.setContent(content);
     message.setSenderType(senderType);
@@ -51,6 +51,38 @@ public class ChatServiceImpl implements ChatService {
 
   public Page<ChatMessage> getMessagesByRoomId(String roomId, Pageable pageable) {
     return chatMessageRepository.findByRoomId(roomId, pageable);
+  }
+
+  /**
+   * Load messages using cursor-based pagination.
+   * Validates user access to the room before returning messages.
+   *
+   * @param roomId   ID of the chat room
+   * @param userId   ID of the user accessing the messages
+   * @param before   Timestamp cursor - messages created before this time
+   * @param beforeId Message ID cursor (reserved for future use)
+   * @param limit    Maximum number of messages to return
+   * @return List of messages ordered by creation time (newest first)
+   * @throws AppException if user doesn't have access to the room
+   */
+  public List<ChatMessage> loadMessagesByCursor(String roomId, String userId, Instant before, String beforeId, int limit) {
+    // Validate user has access to this room
+    if (!hasAccessToRoom(roomId, userId)) {
+      throw new AppException(ErrorCode.UNAUTHORIZED);
+    }
+
+    // Use current time if before is not specified
+    Instant cursorTime = before != null ? before : Instant.now();
+
+    // Load messages before the cursor time
+    if (beforeId != null) {
+      return chatMessageRepository.findMessagesBeforeCursor(roomId, cursorTime, limit);
+    } else if (before != null) {
+      return chatMessageRepository.findMessagesBeforeCursor(roomId, cursorTime, limit);
+    } else {
+      // If no cursor provided, get most recent messages
+      return chatMessageRepository.findRecentMessages(roomId, limit);
+    }
   }
 
   public Optional<ChatMessage> getLastMessageByRoomId(String roomId) {
