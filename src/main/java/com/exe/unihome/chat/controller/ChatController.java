@@ -1,8 +1,10 @@
 package com.exe.unihome.chat.controller;
 
 import com.exe.unihome.chat.service.ChatService;
+import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.persistence.entity.chat.ChatMessage;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
+import com.exe.unihome.websocket.dto.ChatMessageResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,17 +52,15 @@ public class ChatController {
    * GET /chat/rooms/{roomId}/messages?limit=20
    * GET /chat/rooms/{roomId}/messages?before=2024-01-16T10:30:00&beforeId=abc123&limit=20
    *
-   * @param roomId   ID of the chat room
-   * @param before   Timestamp cursor (ISO-8601 format) - messages created before this time
-   * @param beforeId Message ID cursor (reserved for future use with composite cursors)
-   * @param limit    Maximum number of messages to return (default: 20, max: 100)
+   * @param roomId ID of the chat room
+   * @param before Timestamp cursor (ISO-8601 format) - messages created before this time
+   * @param limit  Maximum number of messages to return (default: 20, max: 100)
    * @return List of messages ordered by creation time (newest first)
    */
   @GetMapping("/rooms/{roomId}/load-messages")
-  public ResponseEntity<List<ChatMessage>> loadMessages(
+  public ResponseEntity<ApiResponse<List<ChatMessageResponse>>> loadMessages(
     @PathVariable String roomId,
     @RequestParam(required = false) LocalDateTime before,
-    @RequestParam(required = false) String beforeId,
     @RequestParam(defaultValue = "20") int limit
   ) {
     // Limit maximum to prevent abuse
@@ -69,7 +69,8 @@ public class ChatController {
     }
 
     String userId = SecurityContextHolder.getContext().getAuthentication().getName();
-    List<ChatMessage> messages = chatService.loadMessagesByCursor(roomId, userId, before, beforeId, limit);
-    return ResponseEntity.ok(messages);
+    List<ChatMessage> messages = chatService.loadMessagesByCursor(roomId, userId, before, limit);
+    ApiResponse<List<ChatMessageResponse>> response = chatService.toResponse(messages, roomId);
+    return ResponseEntity.ok(response);
   }
 }

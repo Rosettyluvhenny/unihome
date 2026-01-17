@@ -1,9 +1,14 @@
 package com.exe.unihome.chat.serviceImp;
 
+import com.exe.unihome.auth.mapper.UserMapper;
+import com.exe.unihome.auth.model.UserSummary;
+import com.exe.unihome.auth.service.UserService;
+import com.exe.unihome.chat.mapper.ChatMessageMapper;
 import com.exe.unihome.chat.service.ChatService;
 import com.exe.unihome.chat.service.RoomService;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.notification.NotificationChannel;
 import com.exe.unihome.notification.NotificationType;
 import com.exe.unihome.notification.service.NotificationService;
@@ -11,6 +16,7 @@ import com.exe.unihome.persistence.entity.chat.ChatMessage;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
 import com.exe.unihome.persistence.repository.ChatMessageRepository;
 import com.exe.unihome.persistence.repository.ChatRoomRepository;
+import com.exe.unihome.websocket.dto.ChatMessageResponse;
 import com.exe.unihome.websocket.enums.SenderType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -21,6 +27,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -33,6 +40,9 @@ public class ChatServiceImpl implements ChatService {
   private final NotificationService notificationService;
   private final RoomService roomService;
   private final ObjectMapper objectMapper;
+  private final UserMapper userMapper;
+  private final UserService userService;
+  private final ChatMessageMapper chatMessageMapper;
 
   public Optional<ChatRoom> findRoomById(String roomId) {
     return chatRoomRepository.findById(roomId);
@@ -57,15 +67,14 @@ public class ChatServiceImpl implements ChatService {
    * Load messages using cursor-based pagination.
    * Validates user access to the room before returning messages.
    *
-   * @param roomId   ID of the chat room
-   * @param userId   ID of the user accessing the messages
-   * @param before   Timestamp cursor - messages created before this time
-   * @param beforeId Message ID cursor (reserved for future use)
-   * @param limit    Maximum number of messages to return
+   * @param roomId ID of the chat room
+   * @param userId ID of the user accessing the messages
+   * @param before Timestamp cursor - messages created before this time
+   * @param limit  Maximum number of messages to return
    * @return List of messages ordered by creation time (newest first)
    * @throws AppException if user doesn't have access to the room
    */
-  public List<ChatMessage> loadMessagesByCursor(String roomId, String userId, LocalDateTime before, String beforeId, int limit) {
+  public List<ChatMessage> loadMessagesByCursor(String roomId, String userId, LocalDateTime before, int limit) {
     // Validate user has access to this room
     if (!hasAccessToRoom(roomId, userId)) {
       throw new AppException(ErrorCode.UNAUTHORIZED);
@@ -75,12 +84,9 @@ public class ChatServiceImpl implements ChatService {
     LocalDateTime cursorTime = before != null ? before : LocalDateTime.now();
 
     // Load messages before the cursor time
-    if (beforeId != null) {
-      return chatMessageRepository.findMessagesBeforeCursor(roomId, cursorTime, limit);
-    } else if (before != null) {
+    if (before != null) {
       return chatMessageRepository.findMessagesBeforeCursor(roomId, cursorTime, limit);
     } else {
-      // If no cursor provided, get most recent messages
       return chatMessageRepository.findRecentMessages(roomId, limit);
     }
   }
@@ -171,6 +177,23 @@ public class ChatServiceImpl implements ChatService {
    */
   public boolean hasAccessToRoom(String roomId, String userId) {
     return roomService.isValidRoomForUser(roomId, userId);
+  }
+
+  public ApiResponse<List<ChatMessageResponse>> toResponse(List<ChatMessage> messages, String roomId) {
+    ChatRoom room = roomService.findById(roomId).orElseThrow(() -> new AppException(ErrorCode.ROOM_NOT_FOUND));
+    UserSummary userA = userMapper.ResponsetoSummary(userService.getUserById(room.getUserAId()));
+    UserSummary userB = userMapper.ResponsetoSummary(userService.getUserById(room.getUserBId()));
+    List<UserSummary> users = new ArrayList<>(List.of(userA, userB));
+
+    List<ChatMessageResponse> response = chatMessageMapper.toResponseList(messages);
+
+    response.forEach(r -> r.setParticipant(users));
+
+    return ApiResponse.<List<ChatMessageResponse>>builder()
+      .code(200)
+      .message("Fetch successfully")
+      .data(response)
+      .build();
   }
 }
 

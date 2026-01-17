@@ -1,7 +1,9 @@
 package com.exe.unihome.chat.service;
 
+import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.persistence.entity.chat.ChatMessage;
 import com.exe.unihome.persistence.entity.chat.ChatRoom;
+import com.exe.unihome.websocket.dto.ChatMessageResponse;
 import com.exe.unihome.websocket.enums.SenderType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -21,14 +23,13 @@ public interface ChatService {
    * Load messages using cursor-based pagination.
    * Fetches messages created before the given timestamp.
    *
-   * @param roomId   ID of the chat room
-   * @param userId   ID of the user accessing the messages (for access validation)
-   * @param before   Timestamp cursor - messages created before this time (optional, defaults to now)
-   * @param beforeId Message ID cursor (optional, for additional filtering)
-   * @param limit    Maximum number of messages to return
+   * @param roomId ID of the chat room
+   * @param userId ID of the user accessing the messages (for access validation)
+   * @param before Timestamp cursor - messages created before this time (optional, defaults to now)
+   * @param limit  Maximum number of messages to return
    * @return List of messages
    */
-  List<ChatMessage> loadMessagesByCursor(String roomId, String userId, LocalDateTime before, String beforeId, int limit);
+  List<ChatMessage> loadMessagesByCursor(String roomId, String userId, LocalDateTime before, int limit);
 
   Optional<ChatMessage> getLastMessageByRoomId(String roomId);
 
@@ -43,4 +44,6 @@ public interface ChatService {
   ChatMessage saveBotResponse(String roomId, String botContent);
 
   boolean hasAccessToRoom(String roomId, String userId);
+
+  ApiResponse<List<ChatMessageResponse>> toResponse(List<ChatMessage> messages, String roomId);
 }

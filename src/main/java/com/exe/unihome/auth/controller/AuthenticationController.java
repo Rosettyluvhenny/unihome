@@ -11,6 +11,7 @@ import com.exe.unihome.config.JwtProperties;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
@@ -22,6 +23,7 @@ import java.time.Duration;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Slf4j
 public class AuthenticationController {
   private final AuthenticationService authenticationService;
   private final UserService userService;
@@ -132,6 +134,7 @@ public class AuthenticationController {
   }
 
   private ResponseCookie buildRefreshCookie(String refreshToken) {
+    log.info("refresh token {}", refreshToken);
     return ResponseCookie.from("refresh_token", refreshToken)
       .httpOnly(true)
       .secure(true)
