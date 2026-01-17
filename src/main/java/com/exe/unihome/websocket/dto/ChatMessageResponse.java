@@ -1,0 +1,63 @@
+package com.exe.unihome.websocket.dto;
+
+import com.exe.unihome.auth.model.UserSummary;
+import com.exe.unihome.websocket.enums.SenderType;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * Response payload for a chat message received via WebSocket.
+ */
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ChatMessageResponse {
+
+  /**
+   * Message ID
+   */
+  @JsonProperty("id")
+  private String id;
+
+  /**
+   * Chat room ID
+   */
+  @JsonProperty("roomId")
+  private String roomId;
+
+  /**
+   * Sender ID (userId or null for bot)
+   */
+  @JsonProperty("senderId")
+  private String senderId;
+
+  /**
+   * Sender type: USER or BOT
+   */
+  @JsonProperty("senderType")
+  private SenderType senderType;
+
+  /**
+   * Message content
+   */
+  @JsonProperty("content")
+  private String content;
+
+  /**
+   * Timestamp when message was created
+   */
+  @JsonProperty("createdAt")
+  private LocalDateTime createdAt;
+
+  @JsonProperty("participant")
+  private List<UserSummary> participant = new ArrayList<>();
+}
+

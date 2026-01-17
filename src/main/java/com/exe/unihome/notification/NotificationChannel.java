@@ -3,5 +3,6 @@ package com.exe.unihome.notification;
 public enum NotificationChannel {
   IN_APP,
   EMAIL,
-  PUSH
+  PUSH,
+  WEBSOCKET
 }

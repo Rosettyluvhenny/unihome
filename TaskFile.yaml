@@ -6,7 +6,7 @@ tasks:
     env:
       SPRING_PROFILES_ACTIVE: dev
     cmds:
-      - mvn spring-boot:run
+      - mvn spring-boot:run -Dspring-boot.run.jvmArguments="-Duser.timezone=Asia/Ho_Chi_Minh"
 
   test:
     desc: Run tests
