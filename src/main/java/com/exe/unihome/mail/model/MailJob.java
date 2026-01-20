@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -19,5 +19,5 @@ public class MailJob {
   private String fullName;
   private String verifyToken;
   private int retryCount;
-  private Instant createdAt;
+  private LocalDateTime createdAt;
 }

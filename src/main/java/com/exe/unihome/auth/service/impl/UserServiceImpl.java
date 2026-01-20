@@ -8,7 +8,6 @@ import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.mail.model.MailJob;
 import com.exe.unihome.mail.service.MailQueueService;
-import com.exe.unihome.mail.service.MailService;
 import com.exe.unihome.persistence.entity.identityAndAuth.RoleName;
 import com.exe.unihome.persistence.entity.identityAndAuth.Status;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
@@ -21,7 +20,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -33,7 +32,6 @@ public class UserServiceImpl implements UserService {
   private final PasswordEncoder passwordEncoder;
   private final UserMapper userMapper;
   private final VerifyTokenService verifyTokenService;
-  private final MailService mailService;
   private final MailQueueService mailQueueService;
 
   @Override
@@ -46,7 +44,6 @@ public class UserServiceImpl implements UserService {
       throw new AppException(ErrorCode.PHONE_ALREADY_EXISTS);
     }
     User user = User.builder()
-      .id(UUID.randomUUID().toString())
       .fullName(request.getFullName())
       .email(request.getEmail())
       .password(passwordEncoder.encode(request.getPassword()))
@@ -78,7 +75,6 @@ public class UserServiceImpl implements UserService {
 
     String resolvedName = fullName != null && !fullName.isBlank() ? fullName : email;
     User user = User.builder()
-      .id(UUID.randomUUID().toString())
       .fullName(resolvedName)
       .email(email)
       .password(passwordEncoder.encode(UUID.randomUUID().toString()))
@@ -152,14 +148,13 @@ public class UserServiceImpl implements UserService {
     }
 
     User user = User.builder()
-      .id(UUID.randomUUID().toString())
       .fullName(userCreateRequest.getFullName())
       .email(userCreateRequest.getEmail())
       .password(passwordEncoder.encode(userCreateRequest.getPassword()))
       .phone(userCreateRequest.getPhone())
       .address(userCreateRequest.getAddress())
       .image(userCreateRequest.getImage())
-      .status(Status.ACTIVE)
+      .status(userCreateRequest.getStatus())
       .role(role)
       .build();
 
@@ -189,6 +184,9 @@ public class UserServiceImpl implements UserService {
       user.setImage(userRequest.getImage());
     }
 
+    if (userRequest.getStatus() != null) {
+      user.setStatus(userRequest.getStatus());
+    }
     User updatedUser = userRepository.save(user);
     return userMapper.toResponse(updatedUser);
   }
@@ -231,6 +229,11 @@ public class UserServiceImpl implements UserService {
     userRepository.deleteById(id);
   }
 
+  @Override
+  public boolean existById(String id) {
+    return userRepository.existsById(id);
+  }
+
   private UserResponse verificationMailQueue(String rawVerifyToken, User user) {
     MailJob mailJob = MailJob.builder()
       .jobId(UUID.randomUUID().toString())
@@ -239,12 +242,16 @@ public class UserServiceImpl implements UserService {
       .fullName(user.getFullName())
       .verifyToken(rawVerifyToken)
       .retryCount(0)
-      .createdAt(Instant.now())
+      .createdAt(LocalDateTime.now())
       .build();
 
     mailQueueService.enqueue(mailJob);
 
     return userMapper.toResponse(user);
+  }
+
+  public UserSummary toSummary(UserResponse userResponse) {
+    return userMapper.ResponsetoSummary(userResponse);
   }
 }
 
