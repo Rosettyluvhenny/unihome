@@ -7,12 +7,12 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/unihome}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    password: ${DB_PASSWORD:123456}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:12345}
+      password: ${REDIS_PASSWORD:}
       timeout: 5s
   #      host: ${REDIS_HOST:redis-19053.c252.ap-southeast-1-1.ec2.cloud.redislabs.com}
   #      port: ${REDIS_PORT:19053}
@@ -56,7 +56,7 @@ spring:
             scope: openid,profile,email
 
 jwt:
-  signerKey: ${JWT_SIGNER_KEY:6a1cb621034ba5799fcab51bf3abd3aed423bbea68d559782c02a7f4954cf3556fae79dba9ca362109de89dd4604660f52e9fe73cf7719a69e2ab5d06eba71ba}
+  signerKey: ${JWT_SIGNER_KEY:your-super-secret-key-that-is-at-least-256-bits-long-for-hs256-algorithm}
   valid-duration: ${JWT_VALID_DURATION:36000}
   refreshable-duration: ${JWT_REFRESHABLE_DURATION:360000}
 

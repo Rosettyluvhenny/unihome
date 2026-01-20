@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -24,6 +25,8 @@ public class FurnitureResponse {
     private Integer stock;
     private String status;
     private Boolean hasDiscount;
+    private String primaryImageUrl;
+    private List<FurnitureImageResponse> images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

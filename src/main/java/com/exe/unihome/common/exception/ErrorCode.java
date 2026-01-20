@@ -32,6 +32,15 @@ public enum ErrorCode {
   DISCOUNT_NOT_FOUND(2003, "Discount not found", HttpStatus.NOT_FOUND),
   NOTI_NOT_FOUND(1020, "Notification not existed", HttpStatus.NOT_FOUND),
   ROOM_NOT_FOUND(1021, "Room not existed", HttpStatus.NOT_FOUND),
+  FURNITURE_OUT_OF_STOCK(2004, "Furniture is out of stock", HttpStatus.BAD_REQUEST),
+  CART_NOT_FOUND(3000, "Cart not found", HttpStatus.NOT_FOUND),
+  CART_ITEM_NOT_FOUND(3001, "Cart item not found", HttpStatus.NOT_FOUND),
+  CART_ITEM_EXISTS(3002, "Furniture already in cart", HttpStatus.BAD_REQUEST),
+  CART_EMPTY(3003, "Cart is empty", HttpStatus.BAD_REQUEST),
+  ORDER_NOT_FOUND(4000, "Order not found", HttpStatus.NOT_FOUND),
+  ORDER_STATUS_INVALID(4001, "Order status is invalid", HttpStatus.BAD_REQUEST),
+  ORDER_STATUS_TRANSITION_INVALID(4002, "Cannot transition order to requested status", HttpStatus.BAD_REQUEST),
+  ORDER_ALREADY_CANCELLED(4003, "Order already cancelled", HttpStatus.BAD_REQUEST),
   ;
 
   private final int code;

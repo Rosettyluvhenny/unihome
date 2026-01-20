@@ -7,9 +7,11 @@ import com.exe.unihome.dto.furniture.request.UpdateFurnitureRequest;
 import com.exe.unihome.dto.furniture.response.FurnitureResponse;
 import com.exe.unihome.persistence.entity.Category;
 import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.entity.FurnitureImage;
 import com.exe.unihome.persistence.enums.FurnitureStatus;
 import com.exe.unihome.mapper.FurnitureMapper;
 import com.exe.unihome.persistence.repository.CategoryRepository;
+import com.exe.unihome.persistence.repository.FurnitureImageRepository;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
 import com.exe.unihome.service.FurnitureService;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -30,6 +33,7 @@ public class FurnitureServiceImpl implements FurnitureService {
     
     private final FurnitureRepository furnitureRepository;
     private final CategoryRepository categoryRepository;
+    private final FurnitureImageRepository furnitureImageRepository;
     private final FurnitureMapper furnitureMapper;
 
     @Override
@@ -64,7 +68,10 @@ public class FurnitureServiceImpl implements FurnitureService {
                 .hasDiscount(false)
                 .build();
         
-        Furniture savedFurniture = furnitureRepository.save(furniture);
+        // Flush to guarantee the parent is persisted before inserting child images
+        Furniture savedFurniture = furnitureRepository.saveAndFlush(furniture);
+        // Attach images if provided
+        attachImages(savedFurniture, request.getImageUrls(), request.getPrimaryImageUrl(), true);
         log.info("Furniture created successfully with ID: {}", savedFurniture.getFurnitureId());
         
         return furnitureMapper.toResponse(savedFurniture);
@@ -172,5 +179,50 @@ public class FurnitureServiceImpl implements FurnitureService {
         
         furnitureRepository.deleteById(id);
         log.info("Furniture deleted successfully: {}", id);
+    }
+
+    private void attachImages(Furniture furniture, List<String> imageUrls, String primaryUrl, boolean resetExisting) {
+        if (imageUrls == null || imageUrls.isEmpty()) {
+            return;
+        }
+
+        // Work on the managed collection to avoid orphan-removal issues
+        if (resetExisting) {
+            furniture.getImages().clear();
+        }
+
+        List<FurnitureImage> images = new ArrayList<>();
+        for (int i = 0; i < imageUrls.size(); i++) {
+            String url = imageUrls.get(i);
+            FurnitureImage image = FurnitureImage.builder()
+                    .furniture(furniture)
+                    .imageUrl(url)
+                    .isPrimary(primaryUrl != null && primaryUrl.equals(url))
+                    .displayOrder(i)
+                    .build();
+            images.add(image);
+        }
+
+        // If no primary flagged, make first one primary
+        boolean anyPrimary = images.stream().anyMatch(img -> Boolean.TRUE.equals(img.getIsPrimary()));
+        if (!anyPrimary && !images.isEmpty()) {
+            images.get(0).setIsPrimary(true);
+        }
+
+        // Ensure only one primary
+        boolean primarySet = false;
+        for (FurnitureImage img : images) {
+            if (Boolean.TRUE.equals(img.getIsPrimary())) {
+                if (primarySet) {
+                    img.setIsPrimary(false);
+                } else {
+                    primarySet = true;
+                }
+            }
+        }
+
+        // Persist new images and keep the managed list in sync
+        furnitureImageRepository.saveAll(images);
+        furniture.getImages().addAll(images);
     }
 }
