@@ -41,6 +41,11 @@ public enum ErrorCode {
   ORDER_STATUS_INVALID(4001, "Order status is invalid", HttpStatus.BAD_REQUEST),
   ORDER_STATUS_TRANSITION_INVALID(4002, "Cannot transition order to requested status", HttpStatus.BAD_REQUEST),
   ORDER_ALREADY_CANCELLED(4003, "Order already cancelled", HttpStatus.BAD_REQUEST),
+  USER_LOCATION_NOT_SET(1022, "User location not set", HttpStatus.BAD_REQUEST),
+  WAREHOUSE_LOCATION_NOT_CONFIGURED(1023, "Warehouse location not configured", HttpStatus.INTERNAL_SERVER_ERROR),
+  SHIPPING_TIER_NOT_FOUND(5000, "Shipping fee configuration not found", HttpStatus.INTERNAL_SERVER_ERROR),
+  REVIEW_NOT_ALLOWED(6000, "Only customers who purchased this furniture can review", HttpStatus.FORBIDDEN),
+  REVIEW_NOT_FOUND(6001, "Review not found", HttpStatus.NOT_FOUND),
   ;
 
   private final int code;

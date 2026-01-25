@@ -1,6 +1,7 @@
 package com.exe.unihome.controller;
 
 import com.exe.unihome.common.model.ApiResponse;
+import com.exe.unihome.dto.order.request.CreateOrderRequest;
 import com.exe.unihome.dto.order.request.UpdateOrderStatusRequest;
 import com.exe.unihome.dto.order.response.OrderResponse;
 import com.exe.unihome.persistence.enums.OrderStatus;
@@ -42,9 +43,11 @@ public class OrderController {
 
     @PostMapping("/orders")
     @PreAuthorize("hasRole('CUSTOMER')")
-    @Operation(summary = "Place an order from the current cart")
-    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(Authentication authentication) {
-        OrderResponse response = orderService.placeOrder(authentication.getName());
+    @Operation(summary = "Place an order with custom items and shipping info")
+    public ResponseEntity<ApiResponse<OrderResponse>> placeOrder(
+            Authentication authentication,
+            @Valid @RequestBody CreateOrderRequest request) {
+        OrderResponse response = orderService.placeOrder(authentication.getName(), request);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(ApiResponse.<OrderResponse>builder()
                 .code(0)

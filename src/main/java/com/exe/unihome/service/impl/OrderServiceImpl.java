@@ -2,18 +2,24 @@ package com.exe.unihome.service.impl;
 
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.dto.distance.DistanceResponse;
+import com.exe.unihome.dto.order.request.CreateOrderRequest;
+import com.exe.unihome.dto.order.request.OrderItemRequest;
+import com.exe.unihome.dto.order.request.ShippingInfoRequest;
 import com.exe.unihome.dto.order.response.OrderResponse;
 import com.exe.unihome.mapper.OrderMapper;
 import com.exe.unihome.persistence.entity.Furniture;
-import com.exe.unihome.persistence.entity.cart.Cart;
-import com.exe.unihome.persistence.entity.cart.CartItem;
 import com.exe.unihome.persistence.entity.order.Order;
 import com.exe.unihome.persistence.entity.order.OrderItem;
+import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.enums.OrderStatus;
-import com.exe.unihome.persistence.repository.CartRepository;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
 import com.exe.unihome.persistence.repository.OrderRepository;
+import com.exe.unihome.persistence.repository.UserRepository;
+import com.exe.unihome.service.DistanceService;
 import com.exe.unihome.service.OrderService;
+import com.exe.unihome.service.ShippingFeeService;
+import com.exe.unihome.service.model.ShippingFeeResult;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -22,8 +28,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.EnumMap;
 import java.util.EnumSet;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -45,56 +54,99 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private final OrderRepository orderRepository;
-    private final CartRepository cartRepository;
     private final FurnitureRepository furnitureRepository;
+    private final UserRepository userRepository;
+    private final DistanceService distanceService;
+    private final ShippingFeeService shippingFeeService;
     private final OrderMapper orderMapper;
 
     @Override
     @Transactional
-    public OrderResponse placeOrder(String userId) {
-        Cart cart = cartRepository.findForUpdateByUserId(userId)
-            .orElseThrow(() -> new AppException(ErrorCode.CART_NOT_FOUND));
+    public OrderResponse placeOrder(String userId, CreateOrderRequest request) {
+        validateRequest(request);
 
-        if (cart.getItems() == null || cart.getItems().isEmpty()) {
-            throw new AppException(ErrorCode.CART_EMPTY);
-        }
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+
+        Map<UUID, Integer> quantities = aggregateItems(request.getItems());
 
         Order order = Order.builder()
-            .user(cart.getUser())
+            .user(user)
             .status(OrderStatus.PENDING)
+            .shippingFullName(request.getShippingInfo().getFullName())
+            .shippingPhone(request.getShippingInfo().getPhone())
+            .shippingAddress(request.getShippingInfo().getAddress())
+            .shippingNote(request.getShippingInfo().getNote())
             .build();
 
-        BigDecimal total = BigDecimal.ZERO;
+        BigDecimal subtotal = BigDecimal.ZERO;
 
-        for (CartItem cartItem : cart.getItems()) {
-            Furniture furniture = furnitureRepository.findById(cartItem.getFurniture().getFurnitureId())
+        for (Map.Entry<UUID, Integer> entry : quantities.entrySet()) {
+            Furniture furniture = furnitureRepository.findById(entry.getKey())
                 .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
 
-            if (furniture.getStock() < cartItem.getQuantity()) {
+            Integer requestedQty = entry.getValue();
+            if (requestedQty == null || requestedQty <= 0) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+
+            if (furniture.getStock() < requestedQty) {
                 throw new AppException(ErrorCode.FURNITURE_OUT_OF_STOCK);
             }
 
-            furniture.setStock(furniture.getStock() - cartItem.getQuantity());
+            furniture.setStock(furniture.getStock() - requestedQty);
             furnitureRepository.save(furniture);
 
             BigDecimal unitPrice = resolveUnitPrice(furniture);
             OrderItem orderItem = OrderItem.builder()
                 .order(order)
                 .furniture(furniture)
-                .quantity(cartItem.getQuantity())
+                .quantity(requestedQty)
                 .price(unitPrice)
                 .build();
             order.getItems().add(orderItem);
 
-            total = total.add(unitPrice.multiply(BigDecimal.valueOf(cartItem.getQuantity())));
+            subtotal = subtotal.add(unitPrice.multiply(BigDecimal.valueOf(requestedQty)));
         }
 
+        DistanceResponse distanceResponse = distanceService.getDistanceToWarehouse(userId);
+        double distanceKm = distanceResponse.getDistanceKilometers() != null
+            ? distanceResponse.getDistanceKilometers()
+            : 0d;
+
+        ShippingFeeResult shippingFeeResult = shippingFeeService.calculate(distanceKm, subtotal);
+        BigDecimal shippingFee = shippingFeeResult.getShippingFee();
+        BigDecimal total = subtotal.add(shippingFee);
+
+        order.setSubtotal(subtotal);
+        order.setShippingFee(shippingFee);
         order.setTotalPrice(total);
+        order.setFreeShippingApplied(shippingFeeResult.isFreeApplied());
+        order.setDistanceKm(BigDecimal.valueOf(shippingFeeResult.getDistanceKm()).setScale(2, RoundingMode.HALF_UP));
+
         Order savedOrder = orderRepository.save(order);
-
-        clearCart(cart);
-
         return orderMapper.toResponse(savedOrder);
+    }
+
+    private void validateRequest(CreateOrderRequest request) {
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+        ShippingInfoRequest info = request.getShippingInfo();
+        if (info == null) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+    }
+
+    private Map<UUID, Integer> aggregateItems(List<OrderItemRequest> items) {
+        Map<UUID, Integer> aggregated = new LinkedHashMap<>();
+        for (OrderItemRequest item : items) {
+            if (item.getFurnitureId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+            aggregated.merge(item.getFurnitureId(), item.getQuantity(), Integer::sum);
+        }
+        return aggregated;
     }
 
     @Override
@@ -187,15 +239,6 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(OrderStatus.CANCELLED);
         Order saved = orderRepository.save(order);
         return orderMapper.toResponse(saved);
-    }
-
-    private void clearCart(Cart cart) {
-        if (cart.getItems() != null) {
-            cart.getItems().clear();
-        }
-        cart.setTotalAmount(BigDecimal.ZERO);
-        cart.setTotalQuantity(0);
-        cartRepository.save(cart);
     }
 
     private boolean isTransitionAllowed(OrderStatus current, OrderStatus target) {
