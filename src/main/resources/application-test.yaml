@@ -1,5 +1,4 @@
 spring:
-
   datasource:
     driver-class-name: org.postgresql.Driver
     # url / username / password -> Testcontainers inject
@@ -29,3 +28,11 @@ jwt:
   signerKey: test-sign-key
   valid-duration: 36000
   refreshable-duration: 360000
+
+app:
+  warehouse:
+    address: "UniHome Warehouse, Thu Duc City"
+    latitude: 10.875056
+    longitude: 106.800667
+  shipping:
+    free-threshold: 1000000

@@ -20,7 +20,15 @@ public class OrderResponse {
     private UUID orderId;
     private String userId;
     private OrderStatus status;
+    private BigDecimal subtotal;
+    private BigDecimal shippingFee;
     private BigDecimal totalPrice;
+    private Double distanceKm;
+    private Boolean freeShippingApplied;
+    private String shippingFullName;
+    private String shippingPhone;
+    private String shippingAddress;
+    private String shippingNote;
     private List<OrderItemResponse> items;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

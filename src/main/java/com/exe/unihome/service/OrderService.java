@@ -1,5 +1,6 @@
 package com.exe.unihome.service;
 
+import com.exe.unihome.dto.order.request.CreateOrderRequest;
 import com.exe.unihome.dto.order.response.OrderResponse;
 import com.exe.unihome.persistence.enums.OrderStatus;
 import org.springframework.data.domain.Page;
@@ -9,7 +10,7 @@ import java.util.UUID;
 
 public interface OrderService {
 
-    OrderResponse placeOrder(String userId);
+    OrderResponse placeOrder(String userId, CreateOrderRequest request);
 
     OrderResponse getOrder(UUID orderId, String requesterId, boolean isAdmin);
 

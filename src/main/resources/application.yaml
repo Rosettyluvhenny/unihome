@@ -77,3 +77,11 @@ springdoc:
     doc-expansion: none
 SENDGRID_API_KEY: ${SENDGRID_API}
 FE_URL: ${PAGE_URL}
+
+app:
+  warehouse:
+    address: "UniHome Warehouse, Thu Duc City"
+    latitude: 10.875056
+    longitude: 106.800667
+  shipping:
+    free-threshold: 1000000

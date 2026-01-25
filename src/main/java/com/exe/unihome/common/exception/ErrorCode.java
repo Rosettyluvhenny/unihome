@@ -41,6 +41,9 @@ public enum ErrorCode {
   ORDER_STATUS_INVALID(4001, "Order status is invalid", HttpStatus.BAD_REQUEST),
   ORDER_STATUS_TRANSITION_INVALID(4002, "Cannot transition order to requested status", HttpStatus.BAD_REQUEST),
   ORDER_ALREADY_CANCELLED(4003, "Order already cancelled", HttpStatus.BAD_REQUEST),
+  USER_LOCATION_NOT_SET(1022, "User location not set", HttpStatus.BAD_REQUEST),
+  WAREHOUSE_LOCATION_NOT_CONFIGURED(1023, "Warehouse location not configured", HttpStatus.INTERNAL_SERVER_ERROR),
+  SHIPPING_TIER_NOT_FOUND(5000, "Shipping fee configuration not found", HttpStatus.INTERNAL_SERVER_ERROR),
   ;
 
   private final int code;

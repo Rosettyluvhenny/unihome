@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -48,6 +49,12 @@ public class User {
 
   @Column(nullable = false)
   private String address;
+
+  @Column(precision = 10, scale = 6)
+  private BigDecimal latitude;
+
+  @Column(precision = 10, scale = 6)
+  private BigDecimal longitude;
 
   private String phone;
 

@@ -9,5 +9,10 @@ import org.mapstruct.Mapping;
 public interface OrderMapper {
 
     @Mapping(source = "user.id", target = "userId")
+    @Mapping(target = "distanceKm", expression = "java(toDouble(order.getDistanceKm()))")
     OrderResponse toResponse(Order order);
+
+    default Double toDouble(java.math.BigDecimal value) {
+        return value == null ? null : value.doubleValue();
+    }
 }

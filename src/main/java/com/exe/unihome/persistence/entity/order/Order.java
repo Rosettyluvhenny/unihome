@@ -58,9 +58,36 @@ public class Order {
     @Builder.Default
     private List<OrderItem> items = new ArrayList<>();
 
+    @Column(name = "subtotal", nullable = false, precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal subtotal = BigDecimal.ZERO;
+
+    @Column(name = "shipping_fee", nullable = false, precision = 12, scale = 2)
+    @Builder.Default
+    private BigDecimal shippingFee = BigDecimal.ZERO;
+
     @Column(name = "total_price", nullable = false, precision = 12, scale = 2)
     @Builder.Default
     private BigDecimal totalPrice = BigDecimal.ZERO;
+
+    @Column(name = "distance_km", precision = 8, scale = 2)
+    private BigDecimal distanceKm;
+
+    @Column(name = "free_shipping_applied")
+    @Builder.Default
+    private Boolean freeShippingApplied = Boolean.FALSE;
+
+    @Column(name = "shipping_full_name", length = 255)
+    private String shippingFullName;
+
+    @Column(name = "shipping_phone", length = 50)
+    private String shippingPhone;
+
+    @Column(name = "shipping_address")
+    private String shippingAddress;
+
+    @Column(name = "shipping_note")
+    private String shippingNote;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

@@ -82,3 +82,11 @@ springdoc:
 SENDGRID_API_KEY: ${SENDGRID_API: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}
 
 FE_URL: ${PAGE_URL:http://localhost:8080/unihome}
+
+app:
+  warehouse:
+    address: "UniHome Warehouse, Thu Duc City"
+    latitude: 10.875056
+    longitude: 106.800667
+  shipping:
+    free-threshold: 1000000
