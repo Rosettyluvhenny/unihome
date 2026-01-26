@@ -1,0 +1,98 @@
+package com.exe.unihome.service.postAndSubscription.controller;
+
+import com.exe.unihome.dto.subscription.request.CreateUserBoostRequest;
+import com.exe.unihome.dto.subscription.request.UpdateUserBoostRequest;
+import com.exe.unihome.dto.subscription.response.UserBoostResponse;
+import com.exe.unihome.service.postAndSubscription.UserBoostService;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/user-boosts")
+@RequiredArgsConstructor
+@Slf4j
+public class UserBoostController {
+
+  private final UserBoostService userBoostService;
+
+  @PostMapping
+  public ResponseEntity<UserBoostResponse> createUserBoost(@Valid @RequestBody CreateUserBoostRequest request) {
+    log.info("Create user boost request received for user: {}", request.getUserId());
+    UserBoostResponse response = userBoostService.createUserBoost(request);
+    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<UserBoostResponse> getUserBoostById(@PathVariable String id) {
+    log.info("Get user boost by ID: {}", id);
+    UserBoostResponse response = userBoostService.getUserBoostById(id);
+    return ResponseEntity.ok(response);
+  }
+
+  @GetMapping("/user/{userId}")
+  public ResponseEntity<List<UserBoostResponse>> getUserBoostsByUserId(@PathVariable String userId) {
+    log.info("Get user boosts for user: {}", userId);
+    List<UserBoostResponse> responses = userBoostService.getUserBoostsByUserId(userId);
+    return ResponseEntity.ok(responses);
+  }
+
+  @GetMapping("/user/{userId}/paginated")
+  public ResponseEntity<Page<UserBoostResponse>> getUserBoostsByUserIdPaginated(
+    @PathVariable String userId,
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
+    log.info("Get user boosts for user: {} with pagination", userId);
+    Page<UserBoostResponse> responses = userBoostService.getUserBoostsByUserId(userId, pageable);
+    return ResponseEntity.ok(responses);
+  }
+
+  @GetMapping
+  public ResponseEntity<Page<UserBoostResponse>> getAllUserBoosts(
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
+    log.info("Get all user boosts with pagination");
+    Page<UserBoostResponse> responses = userBoostService.getAllUserBoosts(pageable);
+    return ResponseEntity.ok(responses);
+  }
+
+  @GetMapping("/status/{status}")
+  public ResponseEntity<Page<UserBoostResponse>> getUserBoostsByStatus(
+    @PathVariable String status,
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
+    log.info("Get user boosts by status: {}", status);
+    Page<UserBoostResponse> responses = userBoostService.getUserBoostsByStatus(status, pageable);
+    return ResponseEntity.ok(responses);
+  }
+
+  @PutMapping("/{id}")
+  public ResponseEntity<UserBoostResponse> updateUserBoost(
+    @PathVariable String id,
+    @Valid @RequestBody UpdateUserBoostRequest request) {
+    log.info("Update user boost: {}", id);
+    UserBoostResponse response = userBoostService.updateUserBoost(id, request);
+    return ResponseEntity.ok(response);
+  }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deleteUserBoost(@PathVariable String id) {
+    log.info("Delete user boost: {}", id);
+    userBoostService.deleteUserBoost(id);
+    return ResponseEntity.noContent().build();
+  }
+}
+

@@ -34,7 +34,7 @@ public class SecurityConfig {
   private final ObjectProvider<OAuth2SuccessHandler> oAuth2SuccessHandlerProvider;
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
-  private final String[] publicGetUrl = {"/category/**", "/discounts/**", "/furniture/**"};
+  private final String[] publicGetUrl = {"/category/**", "/discounts/**", "/furniture/**", "/boosts/**"};
 
   @Bean
   public OAuth2UserService<?, OAuth2User> oauth2UserService() {

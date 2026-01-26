@@ -1,34 +1,45 @@
-package com.exe.unihome.persistence.entity.subscription;
+package com.exe.unihome.persistence.entity.postAndComment;
 
+import com.exe.unihome.persistence.entity.subscription.UserBoost;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_boost")
+@Table(name = "post_user_boost")
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 @EntityListeners(AuditingEntityListener.class)
-public class UserBoost {
+public class PostUserBoost {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
 
-  String userId;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "user_boost_id", nullable = false)
+  UserBoost userBoost;
 
-  BigDecimal price;
+  @ManyToOne(fetch = FetchType.LAZY)
+  @JoinColumn(name = "post_id", nullable = false)
+  Post post;
+
+  @Column(name = "start_time", nullable = false)
+  LocalDateTime startTime;
+
+  @Column(name = "end_time", nullable = false)
+  LocalDateTime endTime;
+
+  @Column(nullable = false)
+  String status;
 
   @CreatedDate
   @Column(name = "created_at", updatable = false)
@@ -37,7 +48,5 @@ public class UserBoost {
   @LastModifiedDate
   @Column(name = "updated_at")
   LocalDateTime updatedAt;
-
-  @Enumerated(EnumType.STRING)
-  UserBoostStatus status;
 }
+
