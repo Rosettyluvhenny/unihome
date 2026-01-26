@@ -1,5 +1,6 @@
 package com.exe.unihome.dto.postAndComment.request;
 
+import com.exe.unihome.persistence.entity.postAndComment.PostStatus;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -10,6 +11,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.UUID;
 
 @Data
@@ -29,9 +31,9 @@ public class CreatePostRequest {
   private UUID categoryId;
 
   @NotNull(message = "Status is required")
-  private String status;
+  private PostStatus status;
 
   @Valid
-  private CreatePostDetailRequest postDetail;
+  private List<CreatePostDetailRequest> postDetail;
 }
 

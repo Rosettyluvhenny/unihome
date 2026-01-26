@@ -2,6 +2,7 @@ package com.exe.unihome.service.postAndSubscription;
 
 import com.exe.unihome.dto.subscription.request.CreateUserBoostRequest;
 import com.exe.unihome.dto.subscription.response.UserBoostResponse;
+import com.exe.unihome.persistence.entity.subscription.UserBoostStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -21,7 +22,7 @@ public interface UserBoostService {
 
   Page<UserBoostResponse> getAllUserBoosts(Pageable pageable);
 
-//  UserBoostResponse updateUserBoost(String id, UpdateUserBoostRequest request);
+  UserBoostResponse updateUserBoostStatus(String id, UserBoostStatus userBoostStatus);
 
   void deleteUserBoost(String id, String userId, boolean isAdmin);
 }

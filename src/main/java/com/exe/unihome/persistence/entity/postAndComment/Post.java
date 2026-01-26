@@ -50,12 +50,15 @@ public class Post {
   @JoinColumn(name = "user_id", nullable = false)
   User user;
 
+  @Column(name = "user_id", insertable = false, updatable = false)
+  String userId;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "category_id", nullable = false)
   Category category;
 
-  @OneToOne(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
-  PostDetail postDetail;
+  @OneToMany(mappedBy = "post", fetch = FetchType.EAGER, cascade = CascadeType.ALL, orphanRemoval = true)
+  List<PostDetail> postDetail;
 
   @OneToMany(mappedBy = "post", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
   @Builder.Default

@@ -23,10 +23,13 @@ public class PostDetail {
   @GeneratedValue(strategy = GenerationType.UUID)
   String id;
 
-  @OneToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "post_id", nullable = false)
   Post post;
 
+  @Column(name = "post_id", insertable = false, updatable = false)
+  String postId;
+  
   @Column(columnDefinition = "TEXT")
   String description;
 

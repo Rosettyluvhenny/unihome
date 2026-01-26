@@ -3,6 +3,7 @@ package com.exe.unihome.service.postAndSubscription.controller;
 import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.subscription.request.CreateUserBoostRequest;
 import com.exe.unihome.dto.subscription.response.UserBoostResponse;
+import com.exe.unihome.persistence.entity.subscription.UserBoostStatus;
 import com.exe.unihome.service.postAndSubscription.UserBoostService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -95,5 +96,18 @@ public class UserBoostController {
         .build()
     );
   }
+
+  @PutMapping("/{id}/status")
+  public ResponseEntity<ApiResponse> updateUserBoostStatus(@PathVariable String id, @RequestBody UserBoostStatus status) {
+    log.info("Delete user boost: {}", id);
+    userBoostService.updateUserBoostStatus(id, status);
+    return ResponseEntity.ok(
+      ApiResponse.builder()
+        .code(200)
+        .message("Cancel Successfully")
+        .build()
+    );
+  }
+
 }
 

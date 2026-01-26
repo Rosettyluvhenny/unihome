@@ -32,11 +32,13 @@ public class PostResponse {
 
   private String userName;
 
-  private PostDetailResponse postDetail;
+  private String userImage;
+
+  private List<PostDetailResponse> postDetail;
 
   private List<CommentResponse> comments;
 
-  private List<PostUserBoostResponse> postUserBoosts;
+//  private List<PostUserBoostResponse> postUserBoosts;
 
   private LocalDateTime createdAt;
 

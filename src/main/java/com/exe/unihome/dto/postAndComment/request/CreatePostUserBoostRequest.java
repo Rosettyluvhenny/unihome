@@ -1,5 +1,6 @@
 package com.exe.unihome.dto.postAndComment.request;
 
+import com.exe.unihome.persistence.entity.postAndComment.PostUserBoostStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -26,6 +27,6 @@ public class CreatePostUserBoostRequest {
   @NotNull(message = "End time is required")
   private LocalDateTime endTime;
 
-  private String status;
+  private PostUserBoostStatus status;
 }
 

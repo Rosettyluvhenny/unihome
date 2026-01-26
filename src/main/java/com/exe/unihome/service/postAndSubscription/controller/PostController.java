@@ -6,8 +6,6 @@ import com.exe.unihome.dto.postAndComment.request.UpdatePostRequest;
 import com.exe.unihome.dto.postAndComment.response.PostResponse;
 import com.exe.unihome.service.postAndSubscription.PostService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,14 +23,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/posts")
 @RequiredArgsConstructor
 @Slf4j
-@Tag(name = "Post", description = "Post management APIs")
-@SecurityRequirement(name = "bearerAuth")
 public class PostController {
 
   private final PostService postService;
 
   @PostMapping
-  @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
   @Operation(summary = "Create a new post")
   public ResponseEntity<ApiResponse<PostResponse>> createPost(
     @Valid @RequestBody CreatePostRequest request,

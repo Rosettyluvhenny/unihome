@@ -119,32 +119,22 @@ public class UserBoostServiceImpl implements UserBoostService {
       .map(userBoostMapper::toResponse);
   }
 
-//  @Override
-//  @Transactional
-//  public UserBoostResponse updateUserBoost(String id, UpdateUserBoostRequest request) {
-//    log.info("Updating user boost: {}", id);
-//    UserBoost userBoost = userBoostRepository.findById(id)
-//      .orElseThrow(() -> {
-//        log.error("User boost not found: {}", id);
-//        return new AppException(ErrorCode.INVALID_REQUEST);
-//      });
-//    UserBoostStatus status = request.getStatus();
-//    UserBoostStatus currentStatus =  userBoost.getStatus();
-//    if (status != null) {
-//      switch (status) {
-//        case CANCELLED :
-//          if(currentStatus.equals(UserBoostStatus.PENDING)) {
-//
-//          }
-//          break;
-//      }
-//      userBoost.setStatus(request.getStatus());
-//    }
-//
-//    userBoost = userBoostRepository.save(userBoost);
-//    log.info("User boost updated: {}", id);
-//    return userBoostMapper.toResponse(userBoost);
-//  }
+  @Override
+  @Transactional
+  public UserBoostResponse updateUserBoostStatus(String id, UserBoostStatus userBoostStatus) {
+    log.info("Updating user boost: {}", id);
+    UserBoost userBoost = userBoostRepository.findById(id)
+      .orElseThrow(() -> {
+        log.error("User boost not found: {}", id);
+        return new AppException(ErrorCode.INVALID_REQUEST);
+      });
+//    UserBoostStatus currentStatus = userBoost.getStatus();
+    userBoost.setStatus(userBoostStatus);
+
+    userBoost = userBoostRepository.save(userBoost);
+    log.info("User boost updated: {}", id);
+    return userBoostMapper.toResponse(userBoost);
+  }
 
   @Override
   @Transactional

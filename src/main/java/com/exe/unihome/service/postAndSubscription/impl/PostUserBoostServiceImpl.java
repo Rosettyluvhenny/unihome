@@ -7,6 +7,7 @@ import com.exe.unihome.dto.postAndComment.response.PostUserBoostResponse;
 import com.exe.unihome.mapper.PostUserBoostMapper;
 import com.exe.unihome.persistence.entity.postAndComment.Post;
 import com.exe.unihome.persistence.entity.postAndComment.PostUserBoost;
+import com.exe.unihome.persistence.entity.postAndComment.PostUserBoostStatus;
 import com.exe.unihome.persistence.entity.subscription.UserBoost;
 import com.exe.unihome.persistence.repository.PostRepository;
 import com.exe.unihome.persistence.repository.PostUserBoostRepository;
@@ -56,7 +57,7 @@ public class PostUserBoostServiceImpl implements PostUserBoostService {
       .userBoost(userBoost)
       .startTime(request.getStartTime())
       .endTime(request.getEndTime())
-      .status(request.getStatus() != null ? request.getStatus() : "ACTIVE")
+      .status(request.getStatus() != null ? request.getStatus() : PostUserBoostStatus.ACTIVE)
       .build();
 
     postUserBoost = postUserBoostRepository.save(postUserBoost);

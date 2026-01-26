@@ -6,6 +6,7 @@ import com.exe.unihome.dto.postAndComment.request.CreatePostDetailRequest;
 import com.exe.unihome.dto.postAndComment.request.CreatePostRequest;
 import com.exe.unihome.dto.postAndComment.request.UpdatePostRequest;
 import com.exe.unihome.dto.postAndComment.response.PostResponse;
+import com.exe.unihome.mapper.PostDetailMapper;
 import com.exe.unihome.mapper.PostMapper;
 import com.exe.unihome.persistence.entity.Category;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
@@ -25,6 +26,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -36,6 +39,7 @@ public class PostServiceImpl implements PostService {
   private final CategoryRepository categoryRepository;
   private final UserRepository userRepository;
   private final PostMapper postMapper;
+  private final PostDetailMapper postDetailMapper;
 
   @Override
   @Transactional
@@ -56,37 +60,29 @@ public class PostServiceImpl implements PostService {
         return new AppException(ErrorCode.INVALID_REQUEST);
       });
 
-    // Parse status
-    PostStatus status;
-    try {
-      status = PostStatus.valueOf(request.getStatus().toUpperCase());
-    } catch (IllegalArgumentException e) {
-      log.error("Invalid post status: {}", request.getStatus());
-      throw new AppException(ErrorCode.INVALID_REQUEST);
-    }
 
     // Create post
     Post post = Post.builder()
       .title(request.getTitle())
       .price(request.getPrice())
-      .status(status)
+      .status(request.getStatus())
       .user(user)
       .category(category)
       .build();
 
-    post = postRepository.save(post);
     log.info("Post created with ID: {}", post.getId());
 
     // Create post detail if provided
-    if (request.getPostDetail() != null) {
-      CreatePostDetailRequest detailRequest = request.getPostDetail();
-      PostDetail postDetail = PostDetail.builder()
-        .post(post)
-        .description(detailRequest.getDescription())
-        .image(detailRequest.getImage())
-        .build();
-      post.setPostDetail(postDetailRepository.save(postDetail));
-      log.info("Post detail created for post ID: {}", post.getId());
+    List<CreatePostDetailRequest> postDetailRq = request.getPostDetail();
+    List<PostDetail> postDetails = new ArrayList<>();
+    if (postDetailRq != null) {
+      for (CreatePostDetailRequest postDetailRequest : postDetailRq) {
+        PostDetail postDetail = postDetailMapper.toEntity(postDetailRequest);
+        postDetail.setPost(post);
+        postDetails.add(postDetail);
+      }
+      post.setPostDetail(postDetails);
+      post = postRepository.save(post);
     }
 
     return postMapper.toResponse(post);

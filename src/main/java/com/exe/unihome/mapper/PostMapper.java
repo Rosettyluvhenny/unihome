@@ -10,11 +10,12 @@ public interface PostMapper {
 
   @Mapping(source = "user.id", target = "userId")
   @Mapping(source = "user.fullName", target = "userName")
+  @Mapping(source = "user.image", target = "userImage")
   @Mapping(source = "category.categoryId", target = "categoryId")
   @Mapping(source = "category.name", target = "categoryName")
   @Mapping(source = "postDetail", target = "postDetail")
   @Mapping(source = "comments", target = "comments")
-  @Mapping(source = "postUserBoosts", target = "postUserBoosts")
+//  @Mapping(source = "postUserBoosts", target = "postUserBoosts")
   PostResponse toResponse(Post post);
 
   @Mapping(source = "userId", target = "user.id")
