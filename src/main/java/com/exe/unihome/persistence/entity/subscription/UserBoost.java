@@ -1,10 +1,7 @@
 package com.exe.unihome.persistence.entity.subscription;
 
 import jakarta.persistence.*;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.FieldDefaults;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -20,6 +17,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @EntityListeners(AuditingEntityListener.class)
+@Builder
 public class UserBoost {
 
   @Id
@@ -40,4 +38,8 @@ public class UserBoost {
 
   @Enumerated(EnumType.STRING)
   UserBoostStatus status;
+
+  @ManyToOne(fetch = FetchType.EAGER)
+  @JoinColumn(name = "boost_id", nullable = false)
+  Boost boost;
 }

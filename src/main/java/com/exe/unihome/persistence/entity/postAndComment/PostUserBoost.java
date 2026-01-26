@@ -38,8 +38,9 @@ public class PostUserBoost {
   @Column(name = "end_time", nullable = false)
   LocalDateTime endTime;
 
+  @Enumerated(EnumType.STRING)
   @Column(nullable = false)
-  String status;
+  PostUserBoostStatus status;
 
   @CreatedDate
   @Column(name = "created_at", updatable = false)

@@ -46,6 +46,10 @@ public enum ErrorCode {
   SHIPPING_TIER_NOT_FOUND(5000, "Shipping fee configuration not found", HttpStatus.INTERNAL_SERVER_ERROR),
   REVIEW_NOT_ALLOWED(6000, "Only customers who purchased this furniture can review", HttpStatus.FORBIDDEN),
   REVIEW_NOT_FOUND(6001, "Review not found", HttpStatus.NOT_FOUND),
+  USER_BOOST_CAN_NOT_CANCELLED(1022, "User boost can not cancelled", HttpStatus.BAD_REQUEST),
+  BOOST_NOT_FOUND(1023, "Boost not found", HttpStatus.NOT_FOUND),
+  PENDING_SUBSCRIPTION(1024, "Pending subscription exist, can create new one", HttpStatus.BAD_REQUEST),
+  BOOST_DISABLED(1025,"Selected Boost is disabled", HttpStatus.BAD_REQUEST)
   ;
 
   private final int code;

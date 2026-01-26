@@ -3,11 +3,14 @@ package com.exe.unihome.service.postAndSubscription.impl;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.dto.subscription.request.CreateUserBoostRequest;
-import com.exe.unihome.dto.subscription.request.UpdateUserBoostRequest;
 import com.exe.unihome.dto.subscription.response.UserBoostResponse;
 import com.exe.unihome.mapper.UserBoostMapper;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
+import com.exe.unihome.persistence.entity.subscription.Boost;
+import com.exe.unihome.persistence.entity.subscription.BoostStatus;
 import com.exe.unihome.persistence.entity.subscription.UserBoost;
+import com.exe.unihome.persistence.entity.subscription.UserBoostStatus;
+import com.exe.unihome.persistence.repository.BoostRepository;
 import com.exe.unihome.persistence.repository.UserBoostRepository;
 import com.exe.unihome.persistence.repository.UserRepository;
 import com.exe.unihome.service.postAndSubscription.UserBoostService;
@@ -28,6 +31,7 @@ public class UserBoostServiceImpl implements UserBoostService {
 
   private final UserBoostRepository userBoostRepository;
   private final UserRepository userRepository;
+  private final BoostRepository boostRepository;
   private final UserBoostMapper userBoostMapper;
 
   @Override
@@ -35,6 +39,16 @@ public class UserBoostServiceImpl implements UserBoostService {
   public UserBoostResponse createUserBoost(CreateUserBoostRequest request) {
     log.info("Creating user boost for user: {}", request.getUserId());
 
+    //Validate boost exists
+    Boost boost = boostRepository.findById(request.getBoostId())
+      .orElseThrow(() -> {
+        log.error("User not found: {}", request.getBoostId());
+        return new AppException(ErrorCode.BOOST_NOT_FOUND);
+      });
+    // Validate status active of boost
+    if (boost.getStatus().equals(BoostStatus.DISABLED)) {
+      throw new AppException(ErrorCode.BOOST_DISABLED);
+    }
     // Validate user exists
     User user = userRepository.findById(request.getUserId())
       .orElseThrow(() -> {
@@ -42,7 +56,18 @@ public class UserBoostServiceImpl implements UserBoostService {
         return new AppException(ErrorCode.USER_NOT_FOUND);
       });
 
-    UserBoost userBoost = userBoostMapper.toEntity(request);
+    if (userBoostRepository.existsByUserIdAndStatus(request.getUserId(), UserBoostStatus.PENDING)) {
+      log.error("pending userboost of user existed: ");
+      throw new AppException(ErrorCode.PENDING_SUBSCRIPTION);
+    }
+
+
+    UserBoost userBoost = UserBoost.builder()
+      .userId(user.getId())
+      .boost(boost)
+      .price(boost.getPrice())
+      .status(UserBoostStatus.PENDING)
+      .build();
 
     userBoost = userBoostRepository.save(userBoost);
     log.info("User boost created with ID: {}", userBoost.getId());
@@ -94,40 +119,50 @@ public class UserBoostServiceImpl implements UserBoostService {
       .map(userBoostMapper::toResponse);
   }
 
+//  @Override
+//  @Transactional
+//  public UserBoostResponse updateUserBoost(String id, UpdateUserBoostRequest request) {
+//    log.info("Updating user boost: {}", id);
+//    UserBoost userBoost = userBoostRepository.findById(id)
+//      .orElseThrow(() -> {
+//        log.error("User boost not found: {}", id);
+//        return new AppException(ErrorCode.INVALID_REQUEST);
+//      });
+//    UserBoostStatus status = request.getStatus();
+//    UserBoostStatus currentStatus =  userBoost.getStatus();
+//    if (status != null) {
+//      switch (status) {
+//        case CANCELLED :
+//          if(currentStatus.equals(UserBoostStatus.PENDING)) {
+//
+//          }
+//          break;
+//      }
+//      userBoost.setStatus(request.getStatus());
+//    }
+//
+//    userBoost = userBoostRepository.save(userBoost);
+//    log.info("User boost updated: {}", id);
+//    return userBoostMapper.toResponse(userBoost);
+//  }
+
   @Override
   @Transactional
-  public UserBoostResponse updateUserBoost(String id, UpdateUserBoostRequest request) {
-    log.info("Updating user boost: {}", id);
+  public void deleteUserBoost(String id, String userId, boolean isAdmin) {
+    log.info("cancel user boost: {}", id);
 
     UserBoost userBoost = userBoostRepository.findById(id)
       .orElseThrow(() -> {
         log.error("User boost not found: {}", id);
         return new AppException(ErrorCode.INVALID_REQUEST);
       });
-
-    if (request.getPrice() != null) {
-      userBoost.setPrice(request.getPrice());
+    if (userBoost.getStatus() != UserBoostStatus.PENDING) {
+      throw new AppException(ErrorCode.USER_BOOST_CAN_NOT_CANCELLED);
     }
-    if (request.getStatus() != null) {
-      userBoost.setStatus(request.getStatus());
+    if (!isAdmin && !userId.equals(userBoost.getUserId())) {
+      throw new AppException(ErrorCode.UNAUTHORIZED);
     }
-
-    userBoost = userBoostRepository.save(userBoost);
-    log.info("User boost updated: {}", id);
-    return userBoostMapper.toResponse(userBoost);
-  }
-
-  @Override
-  @Transactional
-  public void deleteUserBoost(String id) {
-    log.info("Deleting user boost: {}", id);
-
-    UserBoost userBoost = userBoostRepository.findById(id)
-      .orElseThrow(() -> {
-        log.error("User boost not found: {}", id);
-        return new AppException(ErrorCode.INVALID_REQUEST);
-      });
-
+    userBoost.setStatus(UserBoostStatus.CANCELLED);
     userBoostRepository.delete(userBoost);
     log.info("User boost deleted: {}", id);
   }

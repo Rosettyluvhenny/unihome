@@ -17,6 +17,8 @@ create table user_boost
 	created_at timestamp default current_timestamp,
 	updated_at timestamp,
 	status     varchar,
+	boost_id   varchar(36),
+	constraint fk_boost_user_boost foreign key (boost_id) references boost (id),
 	constraint fk_user_user_boost foreign key (user_id) references users (id)
 );
 

@@ -1,7 +1,7 @@
 package com.exe.unihome.service.postAndSubscription.controller;
 
+import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.subscription.request.CreateUserBoostRequest;
-import com.exe.unihome.dto.subscription.request.UpdateUserBoostRequest;
 import com.exe.unihome.dto.subscription.response.UserBoostResponse;
 import com.exe.unihome.service.postAndSubscription.UserBoostService;
 import jakarta.validation.Valid;
@@ -14,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -79,20 +80,20 @@ public class UserBoostController {
     return ResponseEntity.ok(responses);
   }
 
-  @PutMapping("/{id}")
-  public ResponseEntity<UserBoostResponse> updateUserBoost(
-    @PathVariable String id,
-    @Valid @RequestBody UpdateUserBoostRequest request) {
-    log.info("Update user boost: {}", id);
-    UserBoostResponse response = userBoostService.updateUserBoost(id, request);
-    return ResponseEntity.ok(response);
-  }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> deleteUserBoost(@PathVariable String id) {
+  @PutMapping("/{id}")
+  public ResponseEntity<ApiResponse> cancelUserBoost(@PathVariable String id, Authentication authentication) {
     log.info("Delete user boost: {}", id);
-    userBoostService.deleteUserBoost(id);
-    return ResponseEntity.noContent().build();
+    String userId = authentication.getName();
+    boolean isAdmin = authentication.getAuthorities().stream()
+      .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+    userBoostService.deleteUserBoost(id, userId, isAdmin);
+    return ResponseEntity.ok(
+      ApiResponse.builder()
+        .code(200)
+        .message("Cancel Successfully")
+        .build()
+    );
   }
 }
 
