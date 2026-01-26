@@ -19,5 +19,7 @@ public interface CommentService {
   CommentResponse updateComment(String id, UpdateCommentRequest request, String userId);
 
   void deleteComment(String id, String userId);
+
+  Page<CommentResponse> getCommentByReplyId(String replyId, Pageable pageable);
 }
 

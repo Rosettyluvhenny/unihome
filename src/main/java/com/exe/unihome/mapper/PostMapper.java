@@ -14,7 +14,6 @@ public interface PostMapper {
   @Mapping(source = "category.categoryId", target = "categoryId")
   @Mapping(source = "category.name", target = "categoryName")
   @Mapping(source = "postDetail", target = "postDetail")
-  @Mapping(source = "comments", target = "comments")
 //  @Mapping(source = "postUserBoosts", target = "postUserBoosts")
   PostResponse toResponse(Post post);
 

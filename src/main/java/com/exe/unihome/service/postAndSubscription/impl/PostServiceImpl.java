@@ -28,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -75,6 +76,7 @@ public class PostServiceImpl implements PostService {
     // Create post detail if provided
     List<CreatePostDetailRequest> postDetailRq = request.getPostDetail();
     List<PostDetail> postDetails = new ArrayList<>();
+    //persist if PostDetail availalbe
     if (postDetailRq != null) {
       for (CreatePostDetailRequest postDetailRequest : postDetailRq) {
         PostDetail postDetail = postDetailMapper.toEntity(postDetailRequest);
@@ -92,11 +94,13 @@ public class PostServiceImpl implements PostService {
   @Transactional(readOnly = true)
   public PostResponse getPostById(String id) {
     log.info("Fetching post by ID: {}", id);
-    Post post = postRepository.findByIdWithDetails(id)
+    Post post = postRepository.findByIdAndStatusWithDetails(id, PostStatus.ACTIVE)
       .orElseThrow(() -> {
         log.error("Post not found: {}", id);
         return new AppException(ErrorCode.INVALID_REQUEST);
       });
+    //TODO: return active only
+    //add user summary and comment pagination
     return postMapper.toResponse(post);
   }
 
@@ -104,7 +108,7 @@ public class PostServiceImpl implements PostService {
   @Transactional(readOnly = true)
   public Page<PostResponse> getAllPosts(Pageable pageable) {
     log.info("Fetching all posts with pagination");
-    return postRepository.findAll(pageable)
+    return postRepository.findAllByStatus(PostStatus.ACTIVE, pageable)
       .map(postMapper::toResponse);
   }
 
@@ -112,15 +116,17 @@ public class PostServiceImpl implements PostService {
   @Transactional(readOnly = true)
   public Page<PostResponse> getPostsByUserId(String userId, Pageable pageable) {
     log.info("Fetching posts for user: {}", userId);
-    return postRepository.findByUserId(userId, pageable)
+    return postRepository.findByUserIdAndStatus(userId, PostStatus.ACTIVE, pageable)
       .map(postMapper::toResponse);
   }
 
   @Override
   @Transactional(readOnly = true)
-  public Page<PostResponse> getPostsByCategory(String categoryId, Pageable pageable) {
+  public Page<PostResponse> getPostsByCategory(UUID categoryId, Pageable pageable) {
     log.info("Fetching posts for category: {}", categoryId);
-    return postRepository.findByCategoryAndStatus(categoryId, PostStatus.ACTIVE.toString(), pageable)
+    //TODO: return ACTIVE only
+    //TODO: add subscription boost sort
+    return postRepository.findByCategoryIdAndStatus(categoryId, PostStatus.ACTIVE, pageable)
       .map(postMapper::toResponse);
   }
 
@@ -128,7 +134,9 @@ public class PostServiceImpl implements PostService {
   @Transactional(readOnly = true)
   public Page<PostResponse> searchPostsByTitle(String title, Pageable pageable) {
     log.info("Searching posts by title: {}", title);
-    return postRepository.findByTitleContainingIgnoreCase(title, pageable)
+    //TODO: return ACTIVE only
+    //TODO: add subscription boost sort
+    return postRepository.findByTitleContainingIgnoreCaseAndStatus(title, PostStatus.ACTIVE, pageable)
       .map(postMapper::toResponse);
   }
 
@@ -136,11 +144,10 @@ public class PostServiceImpl implements PostService {
   @Transactional
   public PostResponse updatePost(String id, UpdatePostRequest request, String userId) {
     log.info("Updating post: {} for user: {}", id, userId);
-
-    Post post = postRepository.findById(id)
+    Post post = postRepository.findByIdAndStatus(id, PostStatus.ACTIVE)
       .orElseThrow(() -> {
         log.error("Post not found: {}", id);
-        return new AppException(ErrorCode.INVALID_REQUEST);
+        return new AppException(ErrorCode.POST_NOT_FOUND);
       });
 
     // Verify ownership
@@ -157,11 +164,11 @@ public class PostServiceImpl implements PostService {
       post.setPrice(new BigDecimal(request.getPrice()));
     }
     if (request.getStatus() != null) {
-      post.setStatus(PostStatus.valueOf(request.getStatus().toUpperCase()));
+      post.setStatus(request.getStatus());
     }
     if (request.getCategoryId() != null) {
       Category category = categoryRepository.findById(request.getCategoryId())
-        .orElseThrow(() -> new AppException(ErrorCode.INVALID_REQUEST));
+        .orElseThrow(() -> new AppException(ErrorCode.CATEGORY_NOT_FOUND));
       post.setCategory(category);
     }
 
@@ -172,7 +179,7 @@ public class PostServiceImpl implements PostService {
 
   @Override
   @Transactional
-  public void deletePost(String id, String userId) {
+  public void disabledPost(String id, String userId) {
     log.info("Deleting post: {} for user: {}", id, userId);
 
     Post post = postRepository.findById(id)
@@ -187,8 +194,8 @@ public class PostServiceImpl implements PostService {
       throw new AppException(ErrorCode.UNAUTHORIZED);
     }
 
-    postRepository.delete(post);
-    log.info("Post deleted: {}", id);
+    post.setStatus(PostStatus.DELETED);
+    postRepository.save(post);
   }
 }
 

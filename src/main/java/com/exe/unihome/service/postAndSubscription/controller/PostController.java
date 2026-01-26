@@ -9,15 +9,18 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/posts")
@@ -57,13 +60,9 @@ public class PostController {
   @GetMapping
   @Operation(summary = "Get all posts with pagination")
   public ResponseEntity<ApiResponse<Page<PostResponse>>> getAllPosts(
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size,
-    @RequestParam(defaultValue = "createdAt") String sortBy,
-    @RequestParam(defaultValue = "DESC") String sortDirection) {
-    log.info("Fetching all posts - page: {}, size: {}", page, size);
-    Sort sort = Sort.by(Sort.Direction.valueOf(sortDirection), sortBy);
-    Pageable pageable = PageRequest.of(page, size, sort);
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
     Page<PostResponse> responses = postService.getAllPosts(pageable);
     return ResponseEntity.ok(ApiResponse.<Page<PostResponse>>builder()
       .code(0)
@@ -76,10 +75,10 @@ public class PostController {
   @Operation(summary = "Get posts by user ID")
   public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByUserId(
     @PathVariable String userId,
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size) {
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
     log.info("Fetching posts for user: {}", userId);
-    Pageable pageable = PageRequest.of(page, size);
     Page<PostResponse> responses = postService.getPostsByUserId(userId, pageable);
     return ResponseEntity.ok(ApiResponse.<Page<PostResponse>>builder()
       .code(0)
@@ -91,11 +90,11 @@ public class PostController {
   @GetMapping("/category/{categoryId}")
   @Operation(summary = "Get posts by category")
   public ResponseEntity<ApiResponse<Page<PostResponse>>> getPostsByCategory(
-    @PathVariable String categoryId,
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size) {
+    @PathVariable UUID categoryId,
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
     log.info("Fetching posts for category: {}", categoryId);
-    Pageable pageable = PageRequest.of(page, size);
     Page<PostResponse> responses = postService.getPostsByCategory(categoryId, pageable);
     return ResponseEntity.ok(ApiResponse.<Page<PostResponse>>builder()
       .code(0)
@@ -108,10 +107,9 @@ public class PostController {
   @Operation(summary = "Search posts by title")
   public ResponseEntity<ApiResponse<Page<PostResponse>>> searchPosts(
     @RequestParam String title,
-    @RequestParam(defaultValue = "0") int page,
-    @RequestParam(defaultValue = "10") int size) {
-    log.info("Searching posts with title: {}", title);
-    Pageable pageable = PageRequest.of(page, size);
+    @ParameterObject
+    @PageableDefault(size = 10, page = 0, sort = "createdAt", direction = Sort.Direction.DESC
+    ) Pageable pageable) {
     Page<PostResponse> responses = postService.searchPostsByTitle(title, pageable);
     return ResponseEntity.ok(ApiResponse.<Page<PostResponse>>builder()
       .code(0)
@@ -121,7 +119,7 @@ public class PostController {
   }
 
   @PutMapping("/{id}")
-  @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+  @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
   @Operation(summary = "Update post")
   public ResponseEntity<ApiResponse<PostResponse>> updatePost(
     @PathVariable String id,
@@ -136,14 +134,14 @@ public class PostController {
       .build());
   }
 
-  @DeleteMapping("/{id}")
-  @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+  @PutMapping("/{id}/delete")
+  @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
   @Operation(summary = "Delete post")
   public ResponseEntity<ApiResponse<Void>> deletePost(
     @PathVariable String id,
     Authentication authentication) {
     log.info("Deleting post: {} by user: {}", id, authentication.getName());
-    postService.deletePost(id, authentication.getName());
+    postService.disabledPost(id, authentication.getName());
     return ResponseEntity.ok(ApiResponse.<Void>builder()
       .code(0)
       .message("Post deleted successfully")

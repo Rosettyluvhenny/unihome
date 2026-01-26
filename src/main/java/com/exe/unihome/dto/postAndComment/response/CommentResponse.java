@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Data
 @Builder
@@ -22,11 +21,11 @@ public class CommentResponse {
 
   private String userName;
 
+  private String userImage;
+
   private String postId;
 
   private String replyId;
-
-  private List<CommentResponse> replies;
 
   private LocalDateTime createdAt;
 

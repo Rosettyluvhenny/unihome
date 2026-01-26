@@ -1,5 +1,6 @@
 package com.exe.unihome.dto.postAndComment.request;
 
+import com.exe.unihome.persistence.entity.postAndComment.PostStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -17,7 +18,7 @@ public class UpdatePostRequest {
 
   private String price;
 
-  private String status;
+  private PostStatus status;
 
   private UUID categoryId;
 }

@@ -10,9 +10,9 @@ public interface CommentMapper {
 
   @Mapping(source = "user.id", target = "userId")
   @Mapping(source = "user.fullName", target = "userName")
+  @Mapping(source = "user.image", target = "userImage")
   @Mapping(source = "post.id", target = "postId")
   @Mapping(source = "reply.id", target = "replyId")
-  @Mapping(source = "replies", target = "replies")
   CommentResponse toResponse(Comment comment);
 
   @Mapping(source = "userId", target = "user.id")

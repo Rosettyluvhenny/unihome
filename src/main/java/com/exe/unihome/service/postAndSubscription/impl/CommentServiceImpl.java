@@ -78,7 +78,7 @@ public class CommentServiceImpl implements CommentService {
     Comment comment = commentRepository.findById(id)
       .orElseThrow(() -> {
         log.error("Comment not found: {}", id);
-        return new AppException(ErrorCode.INVALID_REQUEST);
+        return new AppException(ErrorCode.COMMENT_NOT_FOUND);
       });
     return commentMapper.toResponse(comment);
   }
@@ -87,7 +87,7 @@ public class CommentServiceImpl implements CommentService {
   @Transactional(readOnly = true)
   public Page<CommentResponse> getCommentsByPostId(String postId, Pageable pageable) {
     log.info("Fetching comments for post: {}", postId);
-    return commentRepository.findByPostId(postId, pageable)
+    return commentRepository.findByPostIdAndReplyIdIsNull(postId, pageable)
       .map(commentMapper::toResponse);
   }
 
@@ -141,6 +141,12 @@ public class CommentServiceImpl implements CommentService {
 
     commentRepository.delete(comment);
     log.info("Comment deleted: {}", id);
+  }
+
+  @Override
+  public Page<CommentResponse> getCommentByReplyId(String replyId, Pageable pageable) {
+    return commentRepository.findByReplyId(replyId, pageable)
+      .map(commentMapper::toResponse);
   }
 }
 
