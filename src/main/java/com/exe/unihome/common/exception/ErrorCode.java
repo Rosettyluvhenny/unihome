@@ -41,11 +41,25 @@ public enum ErrorCode {
   ORDER_STATUS_INVALID(4001, "Order status is invalid", HttpStatus.BAD_REQUEST),
   ORDER_STATUS_TRANSITION_INVALID(4002, "Cannot transition order to requested status", HttpStatus.BAD_REQUEST),
   ORDER_ALREADY_CANCELLED(4003, "Order already cancelled", HttpStatus.BAD_REQUEST),
-  USER_LOCATION_NOT_SET(1022, "User location not set", HttpStatus.BAD_REQUEST),
+  USER_LOCATION_NOT_SET(6022, "User location not set", HttpStatus.BAD_REQUEST),
   WAREHOUSE_LOCATION_NOT_CONFIGURED(1023, "Warehouse location not configured", HttpStatus.INTERNAL_SERVER_ERROR),
   SHIPPING_TIER_NOT_FOUND(5000, "Shipping fee configuration not found", HttpStatus.INTERNAL_SERVER_ERROR),
   REVIEW_NOT_ALLOWED(6000, "Only customers who purchased this furniture can review", HttpStatus.FORBIDDEN),
   REVIEW_NOT_FOUND(6001, "Review not found", HttpStatus.NOT_FOUND),
+  USER_BOOST_CAN_NOT_CANCELLED(1022, "User boost can not cancelled", HttpStatus.BAD_REQUEST),
+  BOOST_NOT_FOUND(1023, "Boost not found", HttpStatus.NOT_FOUND),
+  PENDING_SUBSCRIPTION(1024, "Pending subscription exist, can create new one", HttpStatus.BAD_REQUEST),
+  BOOST_DISABLED(1025, "Selected Boost is disabled", HttpStatus.BAD_REQUEST),
+  CATEGORY_NOT_FOUND(1026, "category not found", HttpStatus.NOT_FOUND),
+  POST_NOT_FOUND(1027, "Post not found", HttpStatus.NOT_FOUND),
+  COMMENT_NOT_FOUND(1028, "Comment not found", HttpStatus.NOT_FOUND),
+  BOOST_USAGE_NOT_FOUND(1029, "Boost usage not found", HttpStatus.NOT_FOUND),
+  INVALID_BOOST_USAGE_TIME(1030, "Boost time invalid", HttpStatus.BAD_REQUEST),
+  BOOST_SUBSCRIPTION_NOT_FOUND(1031, "Boost subscription not found", HttpStatus.NOT_FOUND),
+  UNABLE_TO_CANCEL(1032, "Boost subscription is about to finish", HttpStatus.BAD_REQUEST),
+
+  BOOST_USAGE_UNUPDATABLE(1034, "Boost usage is completed", HttpStatus.BAD_REQUEST),
+  INVALID_POST(1035, "Post is not active", HttpStatus.BAD_REQUEST),
   ;
 
   private final int code;
