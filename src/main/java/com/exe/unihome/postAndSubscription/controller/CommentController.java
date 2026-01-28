@@ -1,10 +1,10 @@
-package com.exe.unihome.service.postAndSubscription.controller;
+package com.exe.unihome.postAndSubscription.controller;
 
 import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.postAndComment.request.CreateCommentRequest;
 import com.exe.unihome.dto.postAndComment.request.UpdateCommentRequest;
 import com.exe.unihome.dto.postAndComment.response.CommentResponse;
-import com.exe.unihome.service.postAndSubscription.CommentService;
+import com.exe.unihome.postAndSubscription.CommentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;

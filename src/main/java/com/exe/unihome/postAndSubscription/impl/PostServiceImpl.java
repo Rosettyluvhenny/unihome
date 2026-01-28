@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription.impl;
+package com.exe.unihome.postAndSubscription.impl;
 
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
@@ -13,15 +13,15 @@ import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.entity.postAndComment.Post;
 import com.exe.unihome.persistence.entity.postAndComment.PostDetail;
 import com.exe.unihome.persistence.entity.postAndComment.PostStatus;
-import com.exe.unihome.persistence.repository.CategoryRepository;
-import com.exe.unihome.persistence.repository.PostDetailRepository;
-import com.exe.unihome.persistence.repository.PostRepository;
-import com.exe.unihome.persistence.repository.UserRepository;
-import com.exe.unihome.service.postAndSubscription.PostService;
+import com.exe.unihome.persistence.entity.postAndComment.PostUserBoostStatus;
+import com.exe.unihome.persistence.repository.*;
+import com.exe.unihome.postAndSubscription.PostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,12 +41,12 @@ public class PostServiceImpl implements PostService {
   private final UserRepository userRepository;
   private final PostMapper postMapper;
   private final PostDetailMapper postDetailMapper;
+  private final PostUserBoostRepository postUserBoostRepository;
 
   @Override
   @Transactional
-  public PostResponse createPost(CreatePostRequest request, String userId) {
-    log.info("Creating post with title: {} for user: {}", request.getTitle(), userId);
-
+  public PostResponse createPost(CreatePostRequest request) {
+    String userId = getUserId();
     // Validate user exists
     User user = userRepository.findById(userId)
       .orElseThrow(() -> {
@@ -58,7 +58,7 @@ public class PostServiceImpl implements PostService {
     Category category = categoryRepository.findById(request.getCategoryId())
       .orElseThrow(() -> {
         log.error("Category not found: {}", request.getCategoryId());
-        return new AppException(ErrorCode.INVALID_REQUEST);
+        return new AppException(ErrorCode.CATEGORY_NOT_FOUND);
       });
 
 
@@ -97,9 +97,8 @@ public class PostServiceImpl implements PostService {
     Post post = postRepository.findByIdAndStatusWithDetails(id, PostStatus.ACTIVE)
       .orElseThrow(() -> {
         log.error("Post not found: {}", id);
-        return new AppException(ErrorCode.INVALID_REQUEST);
+        return new AppException(ErrorCode.POST_NOT_FOUND);
       });
-    //TODO: return active only
     //add user summary and comment pagination
     return postMapper.toResponse(post);
   }
@@ -107,9 +106,14 @@ public class PostServiceImpl implements PostService {
   @Override
   @Transactional(readOnly = true)
   public Page<PostResponse> getAllPosts(Pageable pageable) {
-    log.info("Fetching all posts with pagination");
-    return postRepository.findAllByStatus(PostStatus.ACTIVE, pageable)
-      .map(postMapper::toResponse);
+    var result = postRepository.searchPost(null, pageable).map(postMapper::toResponse);
+    result.stream().forEach(post -> {
+      var activeBoostUsage = postUserBoostRepository.findAllByPostIdAndStatus(post.getId(), PostUserBoostStatus.ACTIVE);
+      if (!activeBoostUsage.isEmpty()) {
+        post.setBoost(true);
+      }
+    });
+    return result;
   }
 
   @Override
@@ -124,37 +128,42 @@ public class PostServiceImpl implements PostService {
   @Transactional(readOnly = true)
   public Page<PostResponse> getPostsByCategory(UUID categoryId, Pageable pageable) {
     log.info("Fetching posts for category: {}", categoryId);
-    //TODO: return ACTIVE only
-    //TODO: add subscription boost sort
-    return postRepository.findByCategoryIdAndStatus(categoryId, PostStatus.ACTIVE, pageable)
+
+    var result = postRepository.findByCategoryId(categoryId, pageable)
       .map(postMapper::toResponse);
+    result.stream().forEach(post -> {
+      var activeBoostUsage = postUserBoostRepository.findAllByPostIdAndStatus(post.getId(), PostUserBoostStatus.ACTIVE);
+      if (!activeBoostUsage.isEmpty()) {
+        post.setBoost(true);
+      }
+    });
+    return result;
   }
 
   @Override
   @Transactional(readOnly = true)
   public Page<PostResponse> searchPostsByTitle(String title, Pageable pageable) {
     log.info("Searching posts by title: {}", title);
-    //TODO: return ACTIVE only
-    //TODO: add subscription boost sort
-    return postRepository.findByTitleContainingIgnoreCaseAndStatus(title, PostStatus.ACTIVE, pageable)
-      .map(postMapper::toResponse);
+    var result = postRepository.searchPost(title.trim(), pageable).map(postMapper::toResponse);
+    result.stream().forEach(post -> {
+      var activeBoostUsage = postUserBoostRepository.findAllByPostIdAndStatus(post.getId(), PostUserBoostStatus.ACTIVE);
+      if (!activeBoostUsage.isEmpty()) {
+        post.setBoost(true);
+      }
+    });
+    return result;
   }
 
   @Override
   @Transactional
-  public PostResponse updatePost(String id, UpdatePostRequest request, String userId) {
-    log.info("Updating post: {} for user: {}", id, userId);
+  public PostResponse updatePost(String id, UpdatePostRequest request) {
     Post post = postRepository.findByIdAndStatus(id, PostStatus.ACTIVE)
       .orElseThrow(() -> {
         log.error("Post not found: {}", id);
         return new AppException(ErrorCode.POST_NOT_FOUND);
       });
-
     // Verify ownership
-    if (!post.getUser().getId().equals(userId)) {
-      log.warn("User {} attempted to update post {} owned by {}", userId, id, post.getUser().getId());
-      throw new AppException(ErrorCode.UNAUTHORIZED);
-    }
+    checkOwnerShip(post.getUserId());
 
     // Update fields
     if (request.getTitle() != null) {
@@ -162,9 +171,6 @@ public class PostServiceImpl implements PostService {
     }
     if (request.getPrice() != null) {
       post.setPrice(new BigDecimal(request.getPrice()));
-    }
-    if (request.getStatus() != null) {
-      post.setStatus(request.getStatus());
     }
     if (request.getCategoryId() != null) {
       Category category = categoryRepository.findById(request.getCategoryId())
@@ -179,23 +185,33 @@ public class PostServiceImpl implements PostService {
 
   @Override
   @Transactional
-  public void disabledPost(String id, String userId) {
-    log.info("Deleting post: {} for user: {}", id, userId);
+  public void disabledPost(String id) {
 
     Post post = postRepository.findById(id)
       .orElseThrow(() -> {
         log.error("Post not found: {}", id);
         return new AppException(ErrorCode.INVALID_REQUEST);
       });
-
+    checkOwnerShip(post.getUserId());
     // Verify ownership
-    if (!post.getUser().getId().equals(userId)) {
-      log.warn("User {} attempted to delete post {} owned by {}", userId, id, post.getUser().getId());
-      throw new AppException(ErrorCode.UNAUTHORIZED);
-    }
-
     post.setStatus(PostStatus.DELETED);
     postRepository.save(post);
+  }
+
+  private void checkOwnerShip(String userId) {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    boolean isAdmin = authentication.getAuthorities().stream()
+      .anyMatch(a ->
+        a.getAuthority().equals("ADMIN"));
+    if (!isAdmin)
+      if (!authentication.getName().equals(userId)) {
+        throw new AppException(ErrorCode.UNAUTHORIZED);
+      }
+  }
+
+  private String getUserId() {
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    return authentication.getName();
   }
 }
 

@@ -36,12 +36,10 @@ public class PostResponse {
 
   private List<PostDetailResponse> postDetail;
 
-//  private List<CommentResponse> comments;
-
-//  private List<PostUserBoostResponse> postUserBoosts;
-
   private LocalDateTime createdAt;
 
   private LocalDateTime updatedAt;
+
+  private boolean isBoost;
 }
 

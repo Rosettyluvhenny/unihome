@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription;
+package com.exe.unihome.postAndSubscription;
 
 import com.exe.unihome.dto.postAndComment.request.CreateCommentRequest;
 import com.exe.unihome.dto.postAndComment.request.UpdateCommentRequest;

@@ -1,10 +1,11 @@
-package com.exe.unihome.service.postAndSubscription.controller;
+package com.exe.unihome.postAndSubscription.controller;
 
 import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.subscription.request.CreateUserBoostRequest;
 import com.exe.unihome.dto.subscription.response.UserBoostResponse;
 import com.exe.unihome.persistence.entity.subscription.UserBoostStatus;
-import com.exe.unihome.service.postAndSubscription.UserBoostService;
+import com.exe.unihome.postAndSubscription.UserBoostService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ import java.util.List;
 @RequestMapping("/user-boosts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "User Boost", description = "User boost management APIs")
 public class UserBoostController {
 
   private final UserBoostService userBoostService;

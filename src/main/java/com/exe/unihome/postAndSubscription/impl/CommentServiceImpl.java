@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription.impl;
+package com.exe.unihome.postAndSubscription.impl;
 
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
@@ -12,7 +12,7 @@ import com.exe.unihome.persistence.entity.postAndComment.Post;
 import com.exe.unihome.persistence.repository.CommentRepository;
 import com.exe.unihome.persistence.repository.PostRepository;
 import com.exe.unihome.persistence.repository.UserRepository;
-import com.exe.unihome.service.postAndSubscription.CommentService;
+import com.exe.unihome.postAndSubscription.CommentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

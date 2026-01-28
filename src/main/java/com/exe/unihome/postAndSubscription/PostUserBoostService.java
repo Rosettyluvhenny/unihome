@@ -1,6 +1,7 @@
-package com.exe.unihome.service.postAndSubscription;
+package com.exe.unihome.postAndSubscription;
 
 import com.exe.unihome.dto.postAndComment.request.CreatePostUserBoostRequest;
+import com.exe.unihome.dto.postAndComment.request.UpdatePostUserBoostRequest;
 import com.exe.unihome.dto.postAndComment.response.PostUserBoostResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,12 +16,16 @@ public interface PostUserBoostService {
 
   List<PostUserBoostResponse> getPostUserBoostsByPostId(String postId);
 
-  List<PostUserBoostResponse> getPostUserBoostsByUserBoostId(String userBoostId);
+  List<PostUserBoostResponse> getPostUserBoostsByUserBoostId(String userBoostId, Pageable pageable);
 
   Page<PostUserBoostResponse> getPostUserBoostsByStatus(String status, Pageable pageable);
 
-  PostUserBoostResponse updatePostUserBoost(String id, CreatePostUserBoostRequest request);
+  PostUserBoostResponse updatePostUserBoost(String id, UpdatePostUserBoostRequest request);
 
-  void deletePostUserBoost(String id);
+//  void deletePostUserBoost(String id);
+
+  void updateBoostUsageStatus();
+
+  PostUserBoostResponse cancelPostUserBoost(String id);
 }
 

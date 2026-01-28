@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription.impl;
+package com.exe.unihome.postAndSubscription.impl;
 
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
@@ -13,7 +13,7 @@ import com.exe.unihome.persistence.entity.subscription.UserBoostStatus;
 import com.exe.unihome.persistence.repository.BoostRepository;
 import com.exe.unihome.persistence.repository.UserBoostRepository;
 import com.exe.unihome.persistence.repository.UserRepository;
-import com.exe.unihome.service.postAndSubscription.UserBoostService;
+import com.exe.unihome.postAndSubscription.UserBoostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -66,6 +66,7 @@ public class UserBoostServiceImpl implements UserBoostService {
       .userId(user.getId())
       .boost(boost)
       .price(boost.getPrice())
+      .timeRemain(boost.getDuration())
       .status(UserBoostStatus.PENDING)
       .build();
 

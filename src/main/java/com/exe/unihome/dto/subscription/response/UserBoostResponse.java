@@ -27,5 +27,7 @@ public class UserBoostResponse {
   private LocalDateTime updatedAt;
 
   private BoostResponse boost;
+
+  private int timeRemain;
 }
 

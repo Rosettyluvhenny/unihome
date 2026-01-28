@@ -1,10 +1,11 @@
-package com.exe.unihome.service.postAndSubscription.controller;
+package com.exe.unihome.postAndSubscription.controller;
 
 import com.exe.unihome.dto.subscription.request.CreateBoostRequest;
 import com.exe.unihome.dto.subscription.request.UpdateBoostRequest;
 import com.exe.unihome.dto.subscription.response.BoostResponse;
 import com.exe.unihome.persistence.entity.subscription.BoostStatus;
-import com.exe.unihome.service.postAndSubscription.BoostService;
+import com.exe.unihome.postAndSubscription.BoostService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/boosts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Boost", description = "Boost management APIs")
 public class BoostController {
 
   private final BoostService boostService;

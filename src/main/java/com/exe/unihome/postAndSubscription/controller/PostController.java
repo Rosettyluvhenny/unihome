@@ -1,12 +1,14 @@
-package com.exe.unihome.service.postAndSubscription.controller;
+package com.exe.unihome.postAndSubscription.controller;
 
 import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.postAndComment.request.CreatePostRequest;
 import com.exe.unihome.dto.postAndComment.request.UpdatePostRequest;
 import com.exe.unihome.dto.postAndComment.response.PostResponse;
-import com.exe.unihome.service.postAndSubscription.PostService;
+import com.exe.unihome.postAndSubscription.PostService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jdk.jfr.Description;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springdoc.core.annotations.ParameterObject;
@@ -26,17 +28,18 @@ import java.util.UUID;
 @RequestMapping("/posts")
 @RequiredArgsConstructor
 @Slf4j
+@Tag(name = "Post", description = "Post management APIs")
 public class PostController {
 
   private final PostService postService;
 
   @PostMapping
   @Operation(summary = "Create a new post")
+  @PreAuthorize("hasRole('ADMIN')||hasRole('CUSTOMER')")
   public ResponseEntity<ApiResponse<PostResponse>> createPost(
     @Valid @RequestBody CreatePostRequest request,
     Authentication authentication) {
-    log.info("Creating post by user: {}", authentication.getName());
-    PostResponse response = postService.createPost(request, authentication.getName());
+    PostResponse response = postService.createPost(request);
     return ResponseEntity.status(HttpStatus.CREATED)
       .body(ApiResponse.<PostResponse>builder()
         .code(0)
@@ -105,6 +108,7 @@ public class PostController {
 
   @GetMapping("/search")
   @Operation(summary = "Search posts by title")
+  @Description("Search null  return all by order of Boost Endtime and created Order")
   public ResponseEntity<ApiResponse<Page<PostResponse>>> searchPosts(
     @RequestParam String title,
     @ParameterObject
@@ -123,10 +127,8 @@ public class PostController {
   @Operation(summary = "Update post")
   public ResponseEntity<ApiResponse<PostResponse>> updatePost(
     @PathVariable String id,
-    @Valid @RequestBody UpdatePostRequest request,
-    Authentication authentication) {
-    log.info("Updating post: {} by user: {}", id, authentication.getName());
-    PostResponse response = postService.updatePost(id, request, authentication.getName());
+    @Valid @RequestBody UpdatePostRequest request) {
+    PostResponse response = postService.updatePost(id, request);
     return ResponseEntity.ok(ApiResponse.<PostResponse>builder()
       .code(0)
       .message("Post updated successfully")
@@ -138,14 +140,14 @@ public class PostController {
   @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
   @Operation(summary = "Delete post")
   public ResponseEntity<ApiResponse<Void>> deletePost(
-    @PathVariable String id,
-    Authentication authentication) {
-    log.info("Deleting post: {} by user: {}", id, authentication.getName());
-    postService.disabledPost(id, authentication.getName());
+    @PathVariable String id) {
+    postService.disabledPost(id);
     return ResponseEntity.ok(ApiResponse.<Void>builder()
       .code(0)
       .message("Post deleted successfully")
       .build());
   }
+
+
 }
 

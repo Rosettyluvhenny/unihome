@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription;
+package com.exe.unihome.postAndSubscription;
 
 import com.exe.unihome.dto.postAndComment.request.CreatePostRequest;
 import com.exe.unihome.dto.postAndComment.request.UpdatePostRequest;
@@ -10,7 +10,7 @@ import java.util.UUID;
 
 public interface PostService {
 
-  PostResponse createPost(CreatePostRequest request, String userId);
+  PostResponse createPost(CreatePostRequest request);
 
   PostResponse getPostById(String id);
 
@@ -22,8 +22,8 @@ public interface PostService {
 
   Page<PostResponse> searchPostsByTitle(String title, Pageable pageable);
 
-  PostResponse updatePost(String id, UpdatePostRequest request, String userId);
+  PostResponse updatePost(String id, UpdatePostRequest request);
 
-  void disabledPost(String id, String userId);
+  void disabledPost(String id);
 }
 

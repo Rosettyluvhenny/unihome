@@ -5,18 +5,13 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class UpdatePostRequest {
-
-  private String title;
-
-  private String price;
-  
-  private UUID categoryId;
+public class UpdatePostUserBoostRequest {
+  private LocalDateTime endTime;
 }
 

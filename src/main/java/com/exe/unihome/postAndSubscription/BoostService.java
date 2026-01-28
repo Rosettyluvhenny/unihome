@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription;
+package com.exe.unihome.postAndSubscription;
 
 import com.exe.unihome.dto.subscription.request.CreateBoostRequest;
 import com.exe.unihome.dto.subscription.request.UpdateBoostRequest;

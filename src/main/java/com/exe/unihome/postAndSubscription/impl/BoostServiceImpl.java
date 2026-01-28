@@ -1,4 +1,4 @@
-package com.exe.unihome.service.postAndSubscription.impl;
+package com.exe.unihome.postAndSubscription.impl;
 
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
@@ -9,7 +9,7 @@ import com.exe.unihome.mapper.BoostMapper;
 import com.exe.unihome.persistence.entity.subscription.Boost;
 import com.exe.unihome.persistence.entity.subscription.BoostStatus;
 import com.exe.unihome.persistence.repository.BoostRepository;
-import com.exe.unihome.service.postAndSubscription.BoostService;
+import com.exe.unihome.postAndSubscription.BoostService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;

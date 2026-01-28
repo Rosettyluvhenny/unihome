@@ -53,6 +53,13 @@ public enum ErrorCode {
   CATEGORY_NOT_FOUND(1026, "category not found", HttpStatus.NOT_FOUND),
   POST_NOT_FOUND(1027, "Post not found", HttpStatus.NOT_FOUND),
   COMMENT_NOT_FOUND(1028, "Comment not found", HttpStatus.NOT_FOUND),
+  BOOST_USAGE_NOT_FOUND(1029, "Boost usage not found", HttpStatus.NOT_FOUND),
+  INVALID_BOOST_USAGE_TIME(1030, "Boost time invalid", HttpStatus.BAD_REQUEST),
+  BOOST_SUBSCRIPTION_NOT_FOUND(1031, "Boost subscription not found", HttpStatus.NOT_FOUND),
+  UNABLE_TO_CANCEL(1032, "Boost subscription is about to finish", HttpStatus.BAD_REQUEST),
+
+  BOOST_USAGE_UNUPDATABLE(1034, "Boost usage is completed", HttpStatus.BAD_REQUEST),
+  INVALID_POST(1035, "Post is not active", HttpStatus.BAD_REQUEST),
   ;
 
   private final int code;

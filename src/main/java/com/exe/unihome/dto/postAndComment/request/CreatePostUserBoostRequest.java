@@ -27,6 +27,5 @@ public class CreatePostUserBoostRequest {
   @NotNull(message = "End time is required")
   private LocalDateTime endTime;
 
-  private PostUserBoostStatus status;
 }
 

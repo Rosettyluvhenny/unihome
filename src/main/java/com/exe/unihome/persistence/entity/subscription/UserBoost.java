@@ -39,6 +39,8 @@ public class UserBoost {
   @Enumerated(EnumType.STRING)
   UserBoostStatus status;
 
+  int timeRemain = 0;
+
   @ManyToOne(fetch = FetchType.EAGER)
   @JoinColumn(name = "boost_id", nullable = false)
   Boost boost;

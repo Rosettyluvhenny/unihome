@@ -11,13 +11,14 @@ create table boost
 
 create table user_boost
 (
-	id         varchar(36) primary key,
-	user_id    varchar(36) not null,
-	price      decimal(12, 2),
-	created_at timestamp default current_timestamp,
-	updated_at timestamp,
-	status     varchar,
-	boost_id   varchar(36),
+	id          varchar(36) primary key,
+	user_id     varchar(36) not null,
+	price       decimal(12, 2),
+	created_at  timestamp default current_timestamp,
+	updated_at  timestamp,
+	status      varchar,
+	time_remain int       default 0,
+	boost_id    varchar(36),
 	constraint fk_boost_user_boost foreign key (boost_id) references boost (id),
 	constraint fk_user_user_boost foreign key (user_id) references users (id)
 );
