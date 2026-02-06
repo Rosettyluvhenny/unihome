@@ -67,17 +67,17 @@ public class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
       .maxAge(Duration.ofSeconds(jwtProperties.getRefreshableDuration()))
       .build();
 
-    response.setStatus(HttpServletResponse.SC_OK);
-    response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
-    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+//    response.setStatus(HttpServletResponse.SC_OK);
+//    response.setHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+//    response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 //    objectMapper.writeValue(response.getWriter(), result.response());
-    objectMapper.writeValue(
-      response.getWriter(),
-      ApiResponse.builder().code(200)
-        .message("Login successful")
-        .data(result.response())
-        .build()
-    );
+    response.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+
+// gửi access token qua fragment (không lộ lên server log)
+    String redirectUrl =
+      "https://unihome-smoky.vercel.app/oauth2/success#accessToken=" + result.response().getToken();
+
+    response.sendRedirect(redirectUrl);
   }
 
   private String getAttribute(OAuth2User user, String key) {
