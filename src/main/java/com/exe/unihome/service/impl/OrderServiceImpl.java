@@ -8,18 +8,25 @@ import com.exe.unihome.dto.order.request.OrderItemRequest;
 import com.exe.unihome.dto.order.request.ShippingInfoRequest;
 import com.exe.unihome.dto.order.response.OrderResponse;
 import com.exe.unihome.mapper.OrderMapper;
+import com.exe.unihome.notification.NotificationChannel;
+import com.exe.unihome.notification.NotificationType;
+import com.exe.unihome.notification.service.NotificationService;
 import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.entity.FurnitureSku;
 import com.exe.unihome.persistence.entity.order.Order;
 import com.exe.unihome.persistence.entity.order.OrderItem;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.enums.OrderStatus;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
+import com.exe.unihome.persistence.repository.FurnitureSkuRepository;
 import com.exe.unihome.persistence.repository.OrderRepository;
 import com.exe.unihome.persistence.repository.UserRepository;
 import com.exe.unihome.service.DistanceService;
 import com.exe.unihome.service.OrderService;
 import com.exe.unihome.service.ShippingFeeService;
 import com.exe.unihome.service.model.ShippingFeeResult;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -55,10 +62,13 @@ public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
     private final FurnitureRepository furnitureRepository;
+    private final FurnitureSkuRepository skuRepository;
     private final UserRepository userRepository;
     private final DistanceService distanceService;
     private final ShippingFeeService shippingFeeService;
     private final OrderMapper orderMapper;
+    private final NotificationService notificationService;
+    private final ObjectMapper objectMapper;
 
     @Override
     @Transactional
@@ -68,6 +78,7 @@ public class OrderServiceImpl implements OrderService {
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
 
+        // Aggregate by skuId (not furnitureId)
         Map<UUID, Integer> quantities = aggregateItems(request.getItems());
 
         Order order = Order.builder()
@@ -82,25 +93,34 @@ public class OrderServiceImpl implements OrderService {
         BigDecimal subtotal = BigDecimal.ZERO;
 
         for (Map.Entry<UUID, Integer> entry : quantities.entrySet()) {
-            Furniture furniture = furnitureRepository.findById(entry.getKey())
-                .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
-
+            UUID skuId = entry.getKey();
             Integer requestedQty = entry.getValue();
+
+            FurnitureSku sku = skuRepository.findBySkuId(skuId)
+                .orElseThrow(() -> new AppException(ErrorCode.SKU_NOT_FOUND));
+
+            Furniture furniture = sku.getFurniture();
+
             if (requestedQty == null || requestedQty <= 0) {
                 throw new AppException(ErrorCode.INVALID_REQUEST);
             }
 
-            if (furniture.getStock() < requestedQty) {
-                throw new AppException(ErrorCode.FURNITURE_OUT_OF_STOCK);
+            if (sku.getStock() < requestedQty) {
+                throw new AppException(ErrorCode.SKU_OUT_OF_STOCK);
             }
 
-            furniture.setStock(furniture.getStock() - requestedQty);
-            furnitureRepository.save(furniture);
+            // Deduct SKU stock
+            sku.setStock(sku.getStock() - requestedQty);
+            skuRepository.save(sku);
 
-            BigDecimal unitPrice = resolveUnitPrice(furniture);
+            // Sync furniture-level stock
+            syncFurnitureStock(furniture);
+
+            BigDecimal unitPrice = resolveUnitPrice(sku);
             OrderItem orderItem = OrderItem.builder()
                 .order(order)
                 .furniture(furniture)
+                .sku(sku)
                 .quantity(requestedQty)
                 .price(unitPrice)
                 .build();
@@ -141,10 +161,10 @@ public class OrderServiceImpl implements OrderService {
     private Map<UUID, Integer> aggregateItems(List<OrderItemRequest> items) {
         Map<UUID, Integer> aggregated = new LinkedHashMap<>();
         for (OrderItemRequest item : items) {
-            if (item.getFurnitureId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
+            if (item.getSkuId() == null || item.getQuantity() == null || item.getQuantity() <= 0) {
                 throw new AppException(ErrorCode.INVALID_REQUEST);
             }
-            aggregated.merge(item.getFurnitureId(), item.getQuantity(), Integer::sum);
+            aggregated.merge(item.getSkuId(), item.getQuantity(), Integer::sum);
         }
         return aggregated;
     }
@@ -208,6 +228,10 @@ public class OrderServiceImpl implements OrderService {
 
         order.setStatus(status);
         Order saved = orderRepository.save(order);
+
+        // Gửi thông báo cho customer
+        sendOrderStatusNotification(saved);
+
         return orderMapper.toResponse(saved);
     }
 
@@ -229,15 +253,28 @@ public class OrderServiceImpl implements OrderService {
 
         if (order.getItems() != null) {
             order.getItems().forEach(orderItem -> {
-                Furniture furniture = furnitureRepository.findById(orderItem.getFurniture().getFurnitureId())
-                    .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
-                furniture.setStock(furniture.getStock() + orderItem.getQuantity());
-                furnitureRepository.save(furniture);
+                if (orderItem.getSku() != null) {
+                    FurnitureSku sku = skuRepository.findBySkuId(orderItem.getSku().getSkuId())
+                        .orElseThrow(() -> new AppException(ErrorCode.SKU_NOT_FOUND));
+                    sku.setStock(sku.getStock() + orderItem.getQuantity());
+                    skuRepository.save(sku);
+                    syncFurnitureStock(sku.getFurniture());
+                } else {
+                    // Fallback for legacy orders without SKU
+                    Furniture furniture = furnitureRepository.findById(orderItem.getFurniture().getFurnitureId())
+                        .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
+                    furniture.setStock(furniture.getStock() + orderItem.getQuantity());
+                    furnitureRepository.save(furniture);
+                }
             });
         }
 
         order.setStatus(OrderStatus.CANCELLED);
         Order saved = orderRepository.save(order);
+
+        // Gửi thông báo cho customer
+        sendOrderStatusNotification(saved);
+
         return orderMapper.toResponse(saved);
     }
 
@@ -245,7 +282,45 @@ public class OrderServiceImpl implements OrderService {
         return ALLOWED_TRANSITIONS.getOrDefault(current, EnumSet.noneOf(OrderStatus.class)).contains(target);
     }
 
-    private BigDecimal resolveUnitPrice(Furniture furniture) {
-        return furniture.getFinalPrice() != null ? furniture.getFinalPrice() : furniture.getPrice();
+    private BigDecimal resolveUnitPrice(FurnitureSku sku) {
+        return sku.getFinalPrice() != null ? sku.getFinalPrice() : sku.getPrice();
+    }
+
+    private void sendOrderStatusNotification(Order order) {
+        try {
+            String userId = order.getUser().getId();
+            String title = buildOrderStatusMessage(order.getStatus(), order.getOrderId());
+
+            ObjectNode payload = objectMapper.createObjectNode();
+            payload.put("orderId", order.getOrderId().toString());
+            payload.put("status", order.getStatus().toString());
+            payload.put("action", NotificationType.ORDER.toString());
+
+            notificationService.createNotification(
+                    userId, title, NotificationType.ORDER, NotificationChannel.WEBSOCKET, payload);
+        } catch (Exception e) {
+            log.warn("Failed to send order status notification for order {}: {}",
+                    order.getOrderId(), e.getMessage());
+        }
+    }
+
+    private String buildOrderStatusMessage(OrderStatus status, UUID orderId) {
+        String shortId = orderId.toString().substring(0, 8).toUpperCase();
+        return switch (status) {
+            case PENDING    -> "Đơn hàng #" + shortId + " đã được tạo";
+            case CONFIRMED  -> "Đơn hàng #" + shortId + " đã được xác nhận";
+            case SHIPPING   -> "Đơn hàng #" + shortId + " đang được giao";
+            case COMPLETED  -> "Đơn hàng #" + shortId + " đã hoàn thành";
+            case CANCELLED  -> "Đơn hàng #" + shortId + " đã bị hủy";
+        };
+    }
+
+    private void syncFurnitureStock(Furniture furniture) {
+        List<FurnitureSku> allSkus = skuRepository.findByFurnitureFurnitureIdAndStatus(
+                furniture.getFurnitureId(),
+                com.exe.unihome.persistence.enums.FurnitureStatus.AVAILABLE);
+        int totalStock = allSkus.stream().mapToInt(FurnitureSku::getStock).sum();
+        furniture.setStock(totalStock);
+        furnitureRepository.save(furniture);
     }
 }

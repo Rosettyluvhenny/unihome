@@ -7,11 +7,13 @@ import com.exe.unihome.dto.cart.request.UpdateCartItemRequest;
 import com.exe.unihome.dto.cart.response.CartResponse;
 import com.exe.unihome.mapper.CartMapper;
 import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.entity.FurnitureSku;
 import com.exe.unihome.persistence.entity.cart.Cart;
 import com.exe.unihome.persistence.entity.cart.CartItem;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import com.exe.unihome.persistence.repository.CartRepository;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
+import com.exe.unihome.persistence.repository.FurnitureSkuRepository;
 import com.exe.unihome.persistence.repository.UserRepository;
 import com.exe.unihome.service.CartService;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +34,7 @@ public class CartServiceImpl implements CartService {
     private final CartRepository cartRepository;
     private final UserRepository userRepository;
     private final FurnitureRepository furnitureRepository;
+    private final FurnitureSkuRepository skuRepository;
     private final CartMapper cartMapper;
 
     @Override
@@ -46,16 +49,26 @@ public class CartServiceImpl implements CartService {
     @Transactional
     public CartResponse addItem(String userId, CartItemRequest request) {
         Cart cart = getOrCreateCartForUpdate(userId);
+
         Furniture furniture = furnitureRepository.findById(request.getFurnitureId())
                 .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
 
-        CartItem item = findItemByFurniture(cart, request.getFurnitureId())
+        FurnitureSku sku = skuRepository.findBySkuId(request.getSkuId())
+                .orElseThrow(() -> new AppException(ErrorCode.SKU_NOT_FOUND));
+
+        // Validate SKU belongs to the requested furniture
+        if (!sku.getFurniture().getFurnitureId().equals(furniture.getFurnitureId())) {
+            throw new AppException(ErrorCode.INVALID_REQUEST);
+        }
+
+        CartItem item = findItemBySku(cart, sku.getSkuId())
                 .orElseGet(() -> {
                     CartItem newItem = CartItem.builder()
                             .cart(cart)
                             .furniture(furniture)
+                            .sku(sku)
                             .quantity(0)
-                            .unitPrice(resolveUnitPrice(furniture))
+                            .unitPrice(resolveUnitPrice(sku))
                             .lineTotal(BigDecimal.ZERO)
                             .build();
                     cart.getItems().add(newItem);
@@ -64,7 +77,7 @@ public class CartServiceImpl implements CartService {
 
         int newQuantity = item.getQuantity() + request.getQuantity();
         item.setQuantity(newQuantity);
-        item.setUnitPrice(resolveUnitPrice(furniture));
+        item.setUnitPrice(resolveUnitPrice(sku));
         item.setLineTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
 
         recalculateTotals(cart);
@@ -126,9 +139,9 @@ public class CartServiceImpl implements CartService {
         return cartRepository.save(cart);
     }
 
-    private Optional<CartItem> findItemByFurniture(Cart cart, UUID furnitureId) {
+    private Optional<CartItem> findItemBySku(Cart cart, UUID skuId) {
         return cart.getItems().stream()
-                .filter(ci -> ci.getFurniture() != null && Objects.equals(ci.getFurniture().getFurnitureId(), furnitureId))
+                .filter(ci -> ci.getSku() != null && Objects.equals(ci.getSku().getSkuId(), skuId))
                 .findFirst();
     }
 
@@ -143,7 +156,7 @@ public class CartServiceImpl implements CartService {
         cart.setTotalAmount(totalAmount);
     }
 
-    private BigDecimal resolveUnitPrice(Furniture furniture) {
-        return furniture.getFinalPrice() != null ? furniture.getFinalPrice() : furniture.getPrice();
+    private BigDecimal resolveUnitPrice(FurnitureSku sku) {
+        return sku.getFinalPrice() != null ? sku.getFinalPrice() : sku.getPrice();
     }
 }

@@ -60,6 +60,10 @@ public enum ErrorCode {
 
   BOOST_USAGE_UNUPDATABLE(1034, "Boost usage is completed", HttpStatus.BAD_REQUEST),
   INVALID_POST(1035, "Post is not active", HttpStatus.BAD_REQUEST),
+  SKU_NOT_FOUND(7000, "SKU not found", HttpStatus.NOT_FOUND),
+  SKU_CODE_EXISTS(7001, "SKU code already exists", HttpStatus.BAD_REQUEST),
+  SKU_OUT_OF_STOCK(7002, "SKU is out of stock", HttpStatus.BAD_REQUEST),
+  ATTRIBUTE_TYPE_NOT_FOUND(7003, "Attribute type not found", HttpStatus.NOT_FOUND),
   ;
 
   private final int code;

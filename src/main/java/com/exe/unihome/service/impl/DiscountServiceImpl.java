@@ -9,10 +9,12 @@ import com.exe.unihome.dto.discount.response.DiscountResponse;
 import com.exe.unihome.persistence.entity.Discount;
 import com.exe.unihome.persistence.entity.Furniture;
 import com.exe.unihome.persistence.entity.FurnitureDiscount;
+import com.exe.unihome.persistence.entity.FurnitureSku;
 import com.exe.unihome.mapper.DiscountMapper;
 import com.exe.unihome.persistence.repository.DiscountRepository;
 import com.exe.unihome.persistence.repository.FurnitureDiscountRepository;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
+import com.exe.unihome.persistence.repository.FurnitureSkuRepository;
 import com.exe.unihome.service.DiscountService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +35,7 @@ public class DiscountServiceImpl implements DiscountService {
     private final DiscountRepository discountRepository;
     private final FurnitureRepository furnitureRepository;
     private final FurnitureDiscountRepository furnitureDiscountRepository;
+    private final FurnitureSkuRepository skuRepository;
     private final DiscountMapper discountMapper;
 
     @Override
@@ -213,7 +216,7 @@ public class DiscountServiceImpl implements DiscountService {
     }
     
     /**
-     * Recalculate finalPrice for a furniture item based on its ACTIVE discounts
+     * Recalculate finalPrice for a furniture item and all its SKUs based on ACTIVE discounts
      */
     private void recalculateFurniturePrice(Furniture furniture) {
         // Only consider active discounts (within date range)
@@ -224,6 +227,14 @@ public class DiscountServiceImpl implements DiscountService {
             // No active discounts - finalPrice = price
             furniture.setFinalPrice(furniture.getPrice());
             furniture.setHasDiscount(false);
+
+            // Reset all SKUs
+            List<FurnitureSku> skus = skuRepository.findByFurnitureFurnitureId(furniture.getFurnitureId());
+            for (FurnitureSku sku : skus) {
+                sku.setFinalPrice(sku.getPrice());
+                sku.setHasDiscount(false);
+            }
+            skuRepository.saveAll(skus);
         } else {
             // Find highest active discount percentage
             BigDecimal highestDiscount = activeDiscounts.stream()
@@ -231,7 +242,7 @@ public class DiscountServiceImpl implements DiscountService {
                     .max(Comparator.naturalOrder())
                     .orElse(BigDecimal.ZERO);
             
-            // Calculate: finalPrice = price - (price * discount / 100)
+            // Calculate furniture: finalPrice = price - (price * discount / 100)
             BigDecimal discountAmount = furniture.getPrice()
                     .multiply(highestDiscount)
                     .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
@@ -240,9 +251,20 @@ public class DiscountServiceImpl implements DiscountService {
             
             furniture.setFinalPrice(finalPrice);
             furniture.setHasDiscount(true);
+
+            // Apply same discount percentage to all SKUs
+            List<FurnitureSku> skus = skuRepository.findByFurnitureFurnitureId(furniture.getFurnitureId());
+            for (FurnitureSku sku : skus) {
+                BigDecimal skuDiscountAmount = sku.getPrice()
+                        .multiply(highestDiscount)
+                        .divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+                sku.setFinalPrice(sku.getPrice().subtract(skuDiscountAmount));
+                sku.setHasDiscount(true);
+            }
+            skuRepository.saveAll(skus);
             
-            log.debug("Recalculated price for furniture {}: {} -> {} ({}% off)", 
-                furniture.getName(), furniture.getPrice(), finalPrice, highestDiscount);
+            log.debug("Recalculated price for furniture {} and {} SKUs: {}% off", 
+                furniture.getName(), skus.size(), highestDiscount);
         }
         
         furnitureRepository.save(furniture);

@@ -1,12 +1,11 @@
-package com.exe.unihome.persistence.entity.cart;
+package com.exe.unihome.persistence.entity;
 
-import com.exe.unihome.persistence.entity.Furniture;
-import com.exe.unihome.persistence.entity.FurnitureSku;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -18,46 +17,38 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
-@Table(name = "cart_items",
+@Table(name = "furniture_attribute_types",
        uniqueConstraints = {
-           @UniqueConstraint(name = "uk_cart_items_cart_sku", columnNames = {"cart_id", "sku_id"})
+           @UniqueConstraint(name = "uq_attr_type_per_furniture", columnNames = {"furniture_id", "name"})
+       },
+       indexes = {
+           @Index(name = "idx_attr_type_furniture", columnList = "furniture_id")
        })
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CartItem {
+public class FurnitureAttributeType {
 
     @Id
     @GeneratedValue
-    @Column(name = "cart_item_id", nullable = false)
-    private UUID cartItemId;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "cart_id", nullable = false)
-    private Cart cart;
+    @Column(name = "attribute_type_id", nullable = false)
+    private UUID attributeTypeId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "furniture_id", nullable = false)
     private Furniture furniture;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "sku_id")
-    private FurnitureSku sku;
+    @Column(nullable = false, length = 100)
+    private String name;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
-    @Column(name = "unit_price", nullable = false, precision = 12, scale = 2)
-    private BigDecimal unitPrice;
-
-    @Column(name = "line_total", nullable = false, precision = 12, scale = 2)
-    private BigDecimal lineTotal;
+    @Column(name = "display_order", nullable = false)
+    @Builder.Default
+    private Integer displayOrder = 0;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
