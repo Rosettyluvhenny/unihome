@@ -1,0 +1,198 @@
+package com.exe.unihome.service.impl;
+
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.dto.sku.request.CreateSkuRequest;
+import com.exe.unihome.dto.sku.request.UpdateSkuRequest;
+import com.exe.unihome.dto.sku.response.SkuResponse;
+import com.exe.unihome.mapper.FurnitureSkuMapper;
+import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.entity.FurnitureAttributeType;
+import com.exe.unihome.persistence.entity.FurnitureSku;
+import com.exe.unihome.persistence.entity.SkuAttributeValue;
+import com.exe.unihome.persistence.enums.FurnitureStatus;
+import com.exe.unihome.persistence.repository.FurnitureAttributeTypeRepository;
+import com.exe.unihome.persistence.repository.FurnitureRepository;
+import com.exe.unihome.persistence.repository.FurnitureSkuRepository;
+import com.exe.unihome.service.FurnitureSkuService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+@Slf4j
+public class FurnitureSkuServiceImpl implements FurnitureSkuService {
+
+    private final FurnitureSkuRepository skuRepository;
+    private final FurnitureRepository furnitureRepository;
+    private final FurnitureAttributeTypeRepository attributeTypeRepository;
+    private final FurnitureSkuMapper skuMapper;
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SkuResponse> getSkusByFurnitureId(UUID furnitureId) {
+        if (!furnitureRepository.existsById(furnitureId)) {
+            throw new AppException(ErrorCode.FURNITURE_NOT_FOUND);
+        }
+        List<FurnitureSku> skus = skuRepository.findByFurnitureFurnitureId(furnitureId);
+        return skus.stream()
+                .map(skuMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public SkuResponse getSkuById(UUID skuId) {
+        FurnitureSku sku = skuRepository.findBySkuId(skuId)
+                .orElseThrow(() -> new AppException(ErrorCode.SKU_NOT_FOUND));
+        return skuMapper.toResponse(sku);
+    }
+
+    @Override
+    @Transactional
+    public SkuResponse createSku(UUID furnitureId, CreateSkuRequest request) {
+        Furniture furniture = furnitureRepository.findById(furnitureId)
+                .orElseThrow(() -> new AppException(ErrorCode.FURNITURE_NOT_FOUND));
+
+        if (skuRepository.existsBySkuCode(request.getSkuCode())) {
+            throw new AppException(ErrorCode.SKU_CODE_EXISTS);
+        }
+
+        FurnitureStatus status = FurnitureStatus.AVAILABLE;
+        if (request.getStatus() != null) {
+            try {
+                status = FurnitureStatus.valueOf(request.getStatus().toUpperCase());
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+
+        FurnitureSku sku = FurnitureSku.builder()
+                .furniture(furniture)
+                .skuCode(request.getSkuCode())
+                .price(request.getPrice())
+                .finalPrice(request.getPrice()) // No discount initially
+                .stock(request.getStock())
+                .status(status)
+                .hasDiscount(false)
+                .build();
+
+        // Set attribute values
+        if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
+            attachAttributes(sku, request.getAttributes());
+        }
+
+        // Set image
+        if (request.getImageUrl() != null) {
+            sku.setImageUrl(request.getImageUrl());
+        }
+
+        FurnitureSku savedSku = skuRepository.save(sku);
+
+        // Sync furniture stock = SUM of all SKU stocks
+        syncFurnitureStock(furniture);
+
+        log.info("Created SKU {} for furniture {}", savedSku.getSkuCode(), furniture.getName());
+
+        // Re-fetch to get full entity graph
+        return skuMapper.toResponse(
+                skuRepository.findBySkuId(savedSku.getSkuId()).orElse(savedSku));
+    }
+
+    @Override
+    @Transactional
+    public SkuResponse updateSku(UUID skuId, UpdateSkuRequest request) {
+        FurnitureSku sku = skuRepository.findBySkuId(skuId)
+                .orElseThrow(() -> new AppException(ErrorCode.SKU_NOT_FOUND));
+
+        if (request.getSkuCode() != null && !request.getSkuCode().equals(sku.getSkuCode())) {
+            if (skuRepository.existsBySkuCode(request.getSkuCode())) {
+                throw new AppException(ErrorCode.SKU_CODE_EXISTS);
+            }
+            sku.setSkuCode(request.getSkuCode());
+        }
+
+        if (request.getPrice() != null) {
+            sku.setPrice(request.getPrice());
+            if (!Boolean.TRUE.equals(sku.getHasDiscount())) {
+                sku.setFinalPrice(request.getPrice());
+            }
+        }
+
+        if (request.getStock() != null) {
+            sku.setStock(request.getStock());
+        }
+
+        if (request.getStatus() != null) {
+            try {
+                sku.setStatus(FurnitureStatus.valueOf(request.getStatus().toUpperCase()));
+            } catch (IllegalArgumentException e) {
+                throw new AppException(ErrorCode.INVALID_REQUEST);
+            }
+        }
+
+        if (request.getAttributes() != null) {
+            sku.getAttributeValues().clear();
+            attachAttributes(sku, request.getAttributes());
+        }
+
+        if (request.getImageUrl() != null) {
+            sku.setImageUrl(request.getImageUrl());
+        }
+
+        FurnitureSku savedSku = skuRepository.save(sku);
+
+        // Sync furniture stock
+        syncFurnitureStock(sku.getFurniture());
+
+        log.info("Updated SKU {}", savedSku.getSkuCode());
+
+        return skuMapper.toResponse(
+                skuRepository.findBySkuId(savedSku.getSkuId()).orElse(savedSku));
+    }
+
+    @Override
+    @Transactional
+    public void deleteSku(UUID skuId) {
+        FurnitureSku sku = skuRepository.findBySkuId(skuId)
+                .orElseThrow(() -> new AppException(ErrorCode.SKU_NOT_FOUND));
+
+        Furniture furniture = sku.getFurniture();
+        skuRepository.delete(sku);
+
+        // Sync furniture stock
+        syncFurnitureStock(furniture);
+
+        log.info("Deleted SKU {}", sku.getSkuCode());
+    }
+
+    // ── helpers ──────────────────────────────────────────────
+
+    private void attachAttributes(FurnitureSku sku, Map<UUID, String> attributes) {
+        for (Map.Entry<UUID, String> entry : attributes.entrySet()) {
+            FurnitureAttributeType attrType = attributeTypeRepository.findById(entry.getKey())
+                    .orElseThrow(() -> new AppException(ErrorCode.ATTRIBUTE_TYPE_NOT_FOUND));
+
+            SkuAttributeValue attrValue = SkuAttributeValue.builder()
+                    .sku(sku)
+                    .attributeType(attrType)
+                    .value(entry.getValue())
+                    .build();
+            sku.getAttributeValues().add(attrValue);
+        }
+    }
+
+    private void syncFurnitureStock(Furniture furniture) {
+        List<FurnitureSku> allSkus = skuRepository.findByFurnitureFurnitureIdAndStatus(
+                furniture.getFurnitureId(), FurnitureStatus.AVAILABLE);
+        int totalStock = allSkus.stream().mapToInt(FurnitureSku::getStock).sum();
+        furniture.setStock(totalStock);
+        furnitureRepository.save(furniture);
+    }
+}

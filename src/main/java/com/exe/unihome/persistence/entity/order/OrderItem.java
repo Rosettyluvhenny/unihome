@@ -1,6 +1,7 @@
 package com.exe.unihome.persistence.entity.order;
 
 import com.exe.unihome.persistence.entity.Furniture;
+import com.exe.unihome.persistence.entity.FurnitureSku;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -45,6 +46,10 @@ public class OrderItem {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "furniture_id", nullable = false)
     private Furniture furniture;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "sku_id")
+    private FurnitureSku sku;
 
     @Column(nullable = false)
     private Integer quantity;

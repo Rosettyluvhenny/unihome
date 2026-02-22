@@ -78,6 +78,7 @@ public class FurnitureServiceImpl implements FurnitureService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public FurnitureResponse getFurnitureById(UUID id) {
         log.info("Getting furniture by ID: {}", id);
         
@@ -88,6 +89,7 @@ public class FurnitureServiceImpl implements FurnitureService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<FurnitureResponse> getAllFurniture(Pageable pageable) {
         log.info("Getting all furniture with pagination");
         
@@ -96,6 +98,7 @@ public class FurnitureServiceImpl implements FurnitureService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<FurnitureResponse> getFurnitureByCategory(UUID categoryId) {
         log.info("Getting furniture by category ID: {}", categoryId);
         
@@ -111,6 +114,7 @@ public class FurnitureServiceImpl implements FurnitureService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Page<FurnitureResponse> searchFurnitureByName(String name, Pageable pageable) {
         log.info("Searching furniture by name: {}", name);
         

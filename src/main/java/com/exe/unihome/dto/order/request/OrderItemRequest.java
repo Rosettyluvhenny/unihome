@@ -13,6 +13,9 @@ public class OrderItemRequest {
     private UUID furnitureId;
 
     @NotNull
+    private UUID skuId;
+
+    @NotNull
     @Min(1)
     private Integer quantity;
 }

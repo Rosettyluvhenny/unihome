@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Entity
 @Table(name = "furniture",
@@ -64,6 +66,19 @@ public class Furniture {
     @OrderBy("displayOrder ASC, createdAt ASC")
     @Builder.Default
     private List<FurnitureImage> images = new ArrayList<>();
+
+    @OneToMany(mappedBy = "furniture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<FurnitureSku> skus = new ArrayList<>();
+
+    @OneToMany(mappedBy = "furniture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("displayOrder ASC")
+    @Builder.Default
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private List<FurnitureAttributeType> attributeTypes = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

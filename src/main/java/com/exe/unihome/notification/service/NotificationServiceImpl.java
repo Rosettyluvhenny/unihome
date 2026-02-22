@@ -31,9 +31,10 @@ public class NotificationServiceImpl implements NotificationService {
     Notification n = new Notification();
     n.setUserId(userId);
     n.setChannel(channel.toString());
-    n.setType("VERIFY_EMAIL_SUCCESS");
+    // n.setType("VERIFY_EMAIL_SUCCESS"); // old hardcode
+    n.setType(type.toString());
     n.setTitle(title);
-    n.setPayload(createPayload());
+    n.setPayload(createPayload(type));
     n.setRead(false);
 
     repository.save(n);
@@ -43,9 +44,28 @@ public class NotificationServiceImpl implements NotificationService {
     return n;
   }
 
-  private ObjectNode createPayload() {
+  @Override
+  @Transactional
+  public Notification createNotification(String userId, String title, NotificationType type, NotificationChannel channel, ObjectNode payload) {
+    Notification n = new Notification();
+    n.setUserId(userId);
+    n.setChannel(channel.toString());
+    n.setType(type.toString());
+    n.setTitle(title);
+    n.setPayload(payload);
+    n.setRead(false);
+
+    repository.save(n);
+
+    // push realtime nếu user online
+    wsPublisher.push(n);
+    return n;
+  }
+
+  private ObjectNode createPayload(NotificationType type) {
     ObjectNode root = objectMapper.createObjectNode();
-    root.put("action", NotificationType.PROFILE.toString());
+    // root.put("action", NotificationType.PROFILE.toString()); // old hardcode
+    root.put("action", type.toString());
     return root;
   }
 

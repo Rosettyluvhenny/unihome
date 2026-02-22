@@ -1,7 +1,5 @@
-package com.exe.unihome.dto.furniture.response;
+package com.exe.unihome.dto.sku.response;
 
-import com.exe.unihome.dto.sku.response.AttributeTypeResponse;
-import com.exe.unihome.dto.sku.response.SkuResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,21 +14,17 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class FurnitureResponse {
-    
-    private UUID furnitureId;
-    private UUID categoryId;
-    private String categoryName;
-    private String name;
+public class SkuResponse {
+
+    private UUID skuId;
+    private String skuCode;
     private BigDecimal price;
     private BigDecimal finalPrice;
     private Integer stock;
     private String status;
     private Boolean hasDiscount;
-    private String primaryImageUrl;
-    private List<FurnitureImageResponse> images;
-    private List<AttributeTypeResponse> attributeTypes;
-    private List<SkuResponse> skus;
+    private String imageUrl;
+    private List<SkuAttributeValueResponse> attributes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }
