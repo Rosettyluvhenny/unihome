@@ -64,6 +64,7 @@ public enum ErrorCode {
   SKU_CODE_EXISTS(7001, "SKU code already exists", HttpStatus.BAD_REQUEST),
   SKU_OUT_OF_STOCK(7002, "SKU is out of stock", HttpStatus.BAD_REQUEST),
   ATTRIBUTE_TYPE_NOT_FOUND(7003, "Attribute type not found", HttpStatus.NOT_FOUND),
+  INVALID_TRANSACTION(1035, "Invalid transaction request", HttpStatus.BAD_REQUEST),
   ;
 
   private final int code;

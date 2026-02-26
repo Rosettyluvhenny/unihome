@@ -157,5 +157,6 @@ public class UserBoostServiceImpl implements UserBoostService {
     userBoostRepository.delete(userBoost);
     log.info("User boost deleted: {}", id);
   }
+
 }
 

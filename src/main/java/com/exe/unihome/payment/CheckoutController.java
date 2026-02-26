@@ -1,4 +1,4 @@
-package com.exe.unihome.Payment;
+package com.exe.unihome.payment;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

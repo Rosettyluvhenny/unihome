@@ -1,9 +1,9 @@
-package com.exe.unihome.Payment;
+package com.exe.unihome.payment;
 
+import com.exe.unihome.service.TransactionService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.react05.fcinema_spring.service.BookingService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,7 +20,7 @@ import vn.payos.type.WebhookData;
 @Slf4j
 public class PaymentController {
   private final PayOS payOS;
-  private final BookingService bookingService;
+  private final TransactionService transactionService;
 
   @PostMapping(path = "/payos_transfer_handler")
   public ObjectNode payosTransferHandler(@RequestBody ObjectNode body)
@@ -64,7 +64,7 @@ public class PaymentController {
     try {
       Long orderCode = data.getOrderCode();
       log.info("Processing successful payment for order: {}", orderCode);
-      bookingService.confirmWebhookPayment(orderCode);
+      transactionService.confirmTransaction(String.valueOf(orderCode));
       // Here you would typically find the booking by order code
       // For now, we'll log the payment success
       // You can add logic to update booking status based on your business needs
@@ -84,7 +84,7 @@ public class PaymentController {
     try {
       Long orderCode = data.getOrderCode();
       log.info("Processing cancelled payment for order: {}", orderCode);
-      bookingService.cancelWebhookPayment(orderCode);
+      transactionService.cancelTransaction(String.valueOf(orderCode), "Khách hàng hủy thanh toán");
       // TODO: Update booking payment status to CANCELLED
       // Example: bookingRepository.updatePaymentStatusByOrderCode(orderCode, Booking.PaymentStatus.CANCELLED);
 
