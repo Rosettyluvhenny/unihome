@@ -5,18 +5,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * Create Transaction Request DTO
- * Used to create a new payment transaction
- */
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class CreateTransactionRequest {
-
-  private String orderId;
+public class CreateUserBoostTransactionRequest {
+  private String userBoostId;
   private String paymentMethodId;
-  private String paymentUrl;
 }
+
+
 

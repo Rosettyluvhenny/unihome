@@ -22,7 +22,10 @@ public class TransactionResponse {
   private String orderId;
   private String paymentId;
   private TransactionStatus status;
+  private String userBoostId;
   private String url;
+  private String payOsCode;
+  private String payOsQr;
   private LocalDateTime paidAt;
   private LocalDateTime expiredAt;
   private LocalDateTime createdAt;

@@ -37,5 +37,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, String
    * Count pending transactions for an order
    */
   long countByOrder_OrderIdAndStatus(UUID orderId, TransactionStatus status);
+
+  Optional<Transaction> findByPayOsCode(String payOsCode);
 }
 

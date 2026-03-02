@@ -16,9 +16,9 @@ public interface TransactionService {
    * Create a new transaction for an order
    * Initiates automatic expiration scheduling
    */
-  Transaction createOrderTransaction(UUID orderId, String paymentMethodId, String paymentUrl);
+  Transaction createOrderTransaction(UUID orderId, String paymentMethodId);
 
-  Transaction createBoostTransaction(String userBoostId, String paymentUrl);
+  Transaction createBoostTransaction(String userBoostId);
 
   /**
    * Confirm transaction payment

@@ -3,6 +3,7 @@ CREATE TABLE payment
 	id         VARCHAR(50) PRIMARY KEY,
 	name       VARCHAR(100)                NOT NULL,
 	is_active  BOOLEAN                     NOT NULL DEFAULT TRUE,
+	img        TEXT,
 	created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP,
 	updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -23,7 +24,9 @@ CREATE TABLE transaction
 
 	expired_at    TIMESTAMP                            DEFAULT NULL,
 
+	total_price   DECIMAL(12, 2)              NOT NULL,
 	pay_os_code   varchar(255),
+	pay_os_qr     text,
 	CONSTRAINT fk_transaction_payment
 		FOREIGN KEY (payment_id)
 			REFERENCES payment (id),

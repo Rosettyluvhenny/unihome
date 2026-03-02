@@ -64,7 +64,7 @@ openapi:
   title: API document
   version: v1.0.0
   description: API service
-  serverUrl: ${OPENAPI_SERVER_URL:http://localhost:8080/unihome}
+  serverUrl: ${OPENAPI_SERVER_URL:/unihome}
   serverName: ${OPENAPI_SERVER_NAME:Localhost Dev Server}
 
 springdoc:
@@ -92,10 +92,11 @@ app:
     free-threshold: 1000000
 
 payos:
-  clientId: ${PAYOS_CLIENT_ID:95c115a3-33ba-4cac-896d-b7ff826de2be}
-  apiKey: ${PAYOS_API_KEY:b85a3670-922b-4cae-87eb-39db0841c375}
-  checksumKey: ${PAYOS_CHECKSUM_KEY:636ac61625c8cd6b62904eb5cf8b6159147cdcf66129e107429fb3b1e22c1a61}
+  clientId: ${PAYOS_CLIENT_ID:94cb99bc-92a4-463e-b50d-aae6def4adb1}
+  apiKey: ${PAYOS_API_KEY:cf44d6a5-a5c7-4bf1-92fe-1c1b0325a483}
+  checksumKey: ${PAYOS_CHECKSUM_KEY:53a55a34bf105904e7ca085cf485e53cc5e3e32aad8f8ba12ef43d6f5e426e0a}
   returnUrl: ${VITE_PAYOS_FE_RETURN_URL:/return-url}
+  cancelUrl: ${VITE_PAYOS_FE_CANCEL_URL:/return-url}
 payment:
   expiration:
   minutes: ${EXPIRED_PAYMENT:2}

@@ -10,6 +10,7 @@ public interface TransactionMapper {
 
   @Mapping(source = "order.orderId", target = "orderId")
   @Mapping(source = "payment.id", target = "paymentId")
+  @Mapping(source = "userBoost.id", target = "userBoostId")
   TransactionResponse toResponse(Transaction transaction);
 
   Transaction toEntity(TransactionResponse response);

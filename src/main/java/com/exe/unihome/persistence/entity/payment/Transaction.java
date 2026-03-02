@@ -12,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.UpdateTimestamp;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -45,7 +46,7 @@ public class Transaction {
   private String id;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "order_id", nullable = false)
+  @JoinColumn(name = "order_id", nullable = true)
   private Order order;
 
   @ManyToOne(fetch = FetchType.LAZY)
@@ -53,7 +54,7 @@ public class Transaction {
   private Payment payment;
 
   @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "user_boost_id", nullable = false)
+  @JoinColumn(name = "user_boost_id", nullable = true)
   private UserBoost userBoost;
 
   @Enumerated(EnumType.STRING)
@@ -64,8 +65,17 @@ public class Transaction {
   @Column(name = "url", columnDefinition = "TEXT")
   private String url;
 
+  @Column(name = "total_price")
+  private BigDecimal totalPrice;
+
   @Column(name = "paid_at")
   private LocalDateTime paidAt;
+
+  @Column(name = "pay_os_code")
+  private String payOsCode;
+
+  @Column(name = "pay_os_qr")
+  private String payOsQr;
 
   @Column(name = "expired_at")
   private LocalDateTime expiredAt;

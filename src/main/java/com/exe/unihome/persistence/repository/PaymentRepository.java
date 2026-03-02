@@ -12,7 +12,7 @@ public interface PaymentRepository extends JpaRepository<Payment, String> {
   /**
    * Find payment by name
    */
-  Optional<Payment> findByName(String name);
+  Optional<Payment> findByNameAndIsActiveTrue(String name);
 
   /**
    * Find active payments

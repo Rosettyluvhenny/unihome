@@ -60,7 +60,11 @@ public class SecurityConfig {
           "/swagger-ui/**",
           "/users/**",
           "/swagger-ui.html",
-          "/ws/**")
+          "/ws/**",
+          "/testOrder/**",
+          "/payment/**",
+          "payos/**",
+          "/pay-os-controller")
         .permitAll()
         .requestMatchers(HttpMethod.GET, publicGetUrl).permitAll()
         .requestMatchers(HttpMethod.POST, "/notifications").permitAll()

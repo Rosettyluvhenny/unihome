@@ -20,6 +20,7 @@ import java.util.UUID;
 public class TransactionCancelledEvent {
   private String transactionId;
   private UUID orderId;
+  private String userBoostId;
   private LocalDateTime timestamp;
   private String reason;
   private boolean automatic;  // true if cancelled due to expiration

@@ -1,7 +1,7 @@
 package com.exe.unihome.payment;
 
 import com.exe.unihome.dto.ConfirmWebhookRequest;
-import com.exe.unihome.dto.CreatePaymentLinkRequest;
+import com.exe.unihome.dto.CreatePaymentLinkRequestBody;
 import com.exe.unihome.service.PayOsOrderService;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +14,7 @@ public class PayOsOrderController {
   private final PayOsOrderService orderService;
 
   @PostMapping(path = "/create")
-  public ObjectNode createPaymentLink(@RequestBody CreatePaymentLinkRequest request) {
+  public ObjectNode createPaymentLink(@RequestBody CreatePaymentLinkRequestBody request) {
     return orderService.createPaymentLink(request);
   }
 

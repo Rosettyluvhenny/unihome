@@ -1,20 +1,26 @@
 package com.exe.unihome.service.impl;
 
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
+import com.exe.unihome.dto.CreatePaymentLinkRequestBody;
 import com.exe.unihome.persistence.entity.order.Order;
 import com.exe.unihome.persistence.entity.payment.Payment;
 import com.exe.unihome.persistence.entity.payment.Transaction;
 import com.exe.unihome.persistence.entity.subscription.UserBoost;
+import com.exe.unihome.persistence.entity.subscription.UserBoostStatus;
 import com.exe.unihome.persistence.enums.OrderStatus;
 import com.exe.unihome.persistence.enums.TransactionStatus;
 import com.exe.unihome.persistence.repository.OrderRepository;
 import com.exe.unihome.persistence.repository.PaymentRepository;
 import com.exe.unihome.persistence.repository.TransactionRepository;
 import com.exe.unihome.persistence.repository.UserBoostRepository;
+import com.exe.unihome.postAndSubscription.UserBoostService;
 import com.exe.unihome.service.OrderService;
 import com.exe.unihome.service.TransactionService;
 import com.exe.unihome.service.model.TransactionCancelledEvent;
 import com.exe.unihome.service.model.TransactionCreatedEvent;
 import com.exe.unihome.service.model.TransactionSuccessEvent;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +43,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Slf4j
 public class TransactionServiceImpl implements TransactionService {
+  private final UserBoostService userBoostService;
   @Value("${payment.minutes}")
   private long EXPIRATION_MINUTES;
   private final TransactionRepository transactionRepository;
@@ -44,8 +52,14 @@ public class TransactionServiceImpl implements TransactionService {
   private final OrderService orderService;
   private final TransactionExpirationService transactionExpirationService;
   private final ApplicationEventPublisher eventPublisher;
+  private final PayOsOrderServiceImpl payOsService;
   private final Clock clock;
   private final UserBoostRepository userBoostRepository;
+
+  @Value("${payos.returnUrl}")
+  private String returnUrl;
+  @Value("${payos.cancelUrl}")
+  private String cancelUrl;
 
   /**
    * Create a new transaction for an order
@@ -53,8 +67,7 @@ public class TransactionServiceImpl implements TransactionService {
    */
   @Override
   @Transactional
-  public Transaction createOrderTransaction(UUID orderId, String paymentMethodId,
-                                            String paymentUrl) {
+  public Transaction createOrderTransaction(UUID orderId, String paymentMethodId) {
     try {
       // Fetch order and payment method
       Order order = orderRepository.findById(orderId)
@@ -67,8 +80,8 @@ public class TransactionServiceImpl implements TransactionService {
       Transaction transaction = Transaction.builder()
         .order(order)
         .payment(payment)
+        .totalPrice(order.getTotalPrice())
         .status(TransactionStatus.PENDING)
-        .url(paymentUrl)
         .expiredAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES))
         .build();
 
@@ -87,31 +100,36 @@ public class TransactionServiceImpl implements TransactionService {
 
       eventPublisher.publishEvent(event);
       log.info("Published TransactionCreatedEvent for transaction {}", savedTransaction.getId());
+      savedTransaction = transactionRepository.save(transaction);
 
       return savedTransaction;
 
     } catch (Exception e) {
       log.error("Error creating transaction for order {}: {}", orderId, e.getMessage(), e);
-      throw new RuntimeException("Failed to create transaction", e);
+      throw new AppException(ErrorCode.INVALID_TRANSACTION);
     }
   }
 
   @Override
-  public Transaction createBoostTransaction(String userBoostId, String paymentUrl) {
+  @Transactional
+  public Transaction createBoostTransaction(String userBoostId) {
     try {
       // Fetch order and payment method
       UserBoost userBoost = userBoostRepository.findById(userBoostId)
-        .orElseThrow(() -> new IllegalArgumentException("Order not found: " + userBoostId));
+        .orElseThrow(() -> new AppException(ErrorCode.USER_BOOST_NOT_FOUND));
 
-      Payment payment = paymentRepository.findByName("ONLINE")
-        .orElseThrow(() -> new IllegalArgumentException("Payment method not found: ONLINE"));
-
+      Payment payment = paymentRepository.findByIdAndIsActiveTrue("ONLINE")
+        .orElseThrow(() -> new AppException(ErrorCode.PAYMENT_NOT_FOUND));
       // Create transaction with PENDING status
+
+      if (!userBoost.getStatus().equals(UserBoostStatus.PENDING)) {
+        throw new AppException(ErrorCode.INVALID_TRANSACTION);
+      }
       Transaction transaction = Transaction.builder()
         .userBoost(userBoost)
         .payment(payment)
         .status(TransactionStatus.PENDING)
-        .url(paymentUrl)
+        .totalPrice(userBoost.getPrice())
         .expiredAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES))
         .build();
 
@@ -119,7 +137,7 @@ public class TransactionServiceImpl implements TransactionService {
       Transaction savedTransaction = transactionRepository.save(transaction);
       log.info("Created transaction {} for order {} with payment method {}",
         savedTransaction.getId(), userBoostId, "ONLINE");
-
+      createPaymentLink(savedTransaction);
       // Publish event to schedule automatic expiration
       TransactionCreatedEvent event = TransactionCreatedEvent.builder()
         .transactionId(savedTransaction.getId())
@@ -130,12 +148,12 @@ public class TransactionServiceImpl implements TransactionService {
 
       eventPublisher.publishEvent(event);
       log.info("Published TransactionCreatedEvent for transaction {}", savedTransaction.getId());
-
+      savedTransaction = transactionRepository.save(savedTransaction);
       return savedTransaction;
 
     } catch (Exception e) {
       log.error("Error creating transaction for order {}: {}", userBoostId, e.getMessage(), e);
-      throw new RuntimeException("Failed to create transaction", e);
+      throw new AppException(ErrorCode.INVALID_TRANSACTION);
     }
   }
 
@@ -147,12 +165,12 @@ public class TransactionServiceImpl implements TransactionService {
   @Transactional
   public void confirmTransaction(String transactionId) {
     try {
-      Transaction transaction = transactionRepository.findById(transactionId)
-        .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+      Transaction transaction = transactionRepository.findByPayOsCode(transactionId)
+        .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND));
 
       // Only allow confirmation if transaction is PENDING
       if (transaction.getStatus() != TransactionStatus.PENDING) {
-        throw new IllegalStateException("Transaction is not pending: " + transaction.getStatus());
+        throw new AppException(ErrorCode.TRANSACTION_NOT_PENDING);
       }
 
       // Update transaction status to SUCCESS
@@ -162,7 +180,11 @@ public class TransactionServiceImpl implements TransactionService {
       log.info("Confirmed transaction {} with status SUCCESS", transactionId);
 
       // Update order status to SHIPPING
-      orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.SHIPPING);
+
+      if (getOrderId(transaction) != null)
+        orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.SHIPPING);
+      else
+        userBoostService.updateUserBoostStatus(transaction.getUserBoost().getId(), UserBoostStatus.ACTIVE);
 
       // Publish success event to cancel scheduled expiration
       eventPublisher.publishEvent(new TransactionSuccessEvent(transactionId));
@@ -170,7 +192,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     } catch (Exception e) {
       log.error("Error confirming transaction {}: {}", transactionId, e.getMessage(), e);
-      throw new RuntimeException("Failed to confirm transaction", e);
+      throw new AppException(ErrorCode.INVALID_TRANSACTION);
     }
   }
 
@@ -183,7 +205,7 @@ public class TransactionServiceImpl implements TransactionService {
   public void cancelTransaction(String transactionId, String reason) {
     try {
       Transaction transaction = transactionRepository.findById(transactionId)
-        .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+        .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND));
 
       // Only allow cancellation if transaction is PENDING
       if (transaction.getStatus() != TransactionStatus.PENDING) {
@@ -194,9 +216,12 @@ public class TransactionServiceImpl implements TransactionService {
       transaction.setStatus(TransactionStatus.CANCEL);
       transactionRepository.save(transaction);
       log.info("Cancelled transaction {} with reason: {}", transactionId, reason);
-
       // Update order status to CANCELLED
-      orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.CANCELLED);
+
+      if (getOrderId(transaction) != null)
+        orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.CANCELLED);
+      else
+        userBoostService.updateUserBoostStatus(transaction.getUserBoost().getId(), UserBoostStatus.CANCELLED);
 
       // Publish cancellation event
       TransactionCancelledEvent event = TransactionCancelledEvent.builder()
@@ -212,7 +237,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     } catch (Exception e) {
       log.error("Error cancelling transaction {}: {}", transactionId, e.getMessage(), e);
-      throw new RuntimeException("Failed to cancel transaction", e);
+      throw new AppException(ErrorCode.INVALID_TRANSACTION);
     }
   }
 
@@ -240,7 +265,7 @@ public class TransactionServiceImpl implements TransactionService {
   public void updateTransactionStatus(String transactionId, TransactionStatus status) {
     try {
       Transaction transaction = transactionRepository.findById(transactionId)
-        .orElseThrow(() -> new IllegalArgumentException("Transaction not found: " + transactionId));
+        .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND));
 
       transaction.setStatus(status);
       transactionRepository.save(transaction);
@@ -250,6 +275,50 @@ public class TransactionServiceImpl implements TransactionService {
       log.error("Error updating transaction {} status: {}", transactionId, e.getMessage(), e);
       throw new RuntimeException("Failed to update transaction status", e);
     }
+  }
+
+  private void createPaymentLink(Transaction savedTransaction) {
+    try {
+      long expiredEpoch = savedTransaction.getExpiredAt()
+        .atZone(ZoneId.of("Asia/Ho_Chi_Minh"))
+        .toEpochSecond();
+      log.info("return {} , cancel {}", this.returnUrl, this.cancelUrl);
+      CreatePaymentLinkRequestBody paymentRequest =
+        new CreatePaymentLinkRequestBody(
+          "Unihome order#" + savedTransaction.getId().substring(0, 10),
+          "Unihome order#" + savedTransaction.getId().substring(0, 10),
+          this.returnUrl,
+          savedTransaction.getTotalPrice().intValue(), // Convert to int for payment
+          this.cancelUrl,
+          expiredEpoch
+        );
+
+      ObjectNode paymentResult = payOsService.createPaymentLink(paymentRequest);
+      log.info("check {}", paymentResult != null);
+      log.info("check2  {}", paymentResult.get("error").asInt());
+
+      if (paymentResult != null && paymentResult.get("error").asInt() == 0) {
+        if (paymentResult.has("data") && paymentResult.get("data").has("orderCode")) {
+          String orderCode = paymentResult.get("data").get("orderCode").asText();
+          savedTransaction.setPayOsCode(orderCode);
+          String payOsLink = paymentResult.get("data").get("checkoutUrl").asText();
+          log.info("Payment link created successfully:" + payOsLink);
+          savedTransaction.setUrl(payOsLink);
+          String qrCode = paymentResult.get("data").get("qrCode").asText();
+          savedTransaction.setPayOsQr(qrCode);
+        }
+      }
+    } catch (Exception e) {
+      throw new AppException(ErrorCode.PAYMENT_LINK_CREATION_FAILED);
+    }
+
+    // Publish BookingCreatedEvent for automatic cancellation scheduling
+    LocalDateTime expirationTime = savedTransaction.getExpiredAt();
+
+    TransactionCreatedEvent createdEvent =
+      new TransactionCreatedEvent(
+        savedTransaction.getId(), getOrderId(savedTransaction), getUserBoostId(savedTransaction), null, expirationTime);
+    eventPublisher.publishEvent(createdEvent);
   }
 
   /**
@@ -275,5 +344,14 @@ public class TransactionServiceImpl implements TransactionService {
       return false;
     }
   }
+
+  private UUID getOrderId(Transaction savedTransaction) {
+    return savedTransaction.getOrder() == null ? null : savedTransaction.getOrder().getOrderId();
+  }
+
+  private String getUserBoostId(Transaction savedTransaction) {
+    return savedTransaction.getUserBoost() == null ? null : savedTransaction.getUserBoost().getId();
+  }
+
 }
 
