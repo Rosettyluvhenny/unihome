@@ -35,7 +35,7 @@ public class SecurityConfig {
   private final JwtAuthenticationFilter jwtAuthenticationFilter;
   private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
   private final String[] publicGetUrl = {"/category/**", "/discounts/**", "/furniture/**",
-    "/boosts/**, /posts/**,/post-boosts/**"};
+    "/boosts/**", "/posts/**", "/post-boosts/**"};
 
   @Bean
   public OAuth2UserService<?, OAuth2User> oauth2UserService() {
@@ -60,7 +60,11 @@ public class SecurityConfig {
           "/swagger-ui/**",
           "/users/**",
           "/swagger-ui.html",
-          "/ws/**")
+          "/ws/**",
+          "/testOrder/**",
+          "/payment/**",
+          "payos/**",
+          "/pay-os-controller")
         .permitAll()
         .requestMatchers(HttpMethod.GET, publicGetUrl).permitAll()
         .requestMatchers(HttpMethod.POST, "/notifications").permitAll()

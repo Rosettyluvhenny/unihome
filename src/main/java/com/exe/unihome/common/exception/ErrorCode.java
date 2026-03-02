@@ -64,6 +64,12 @@ public enum ErrorCode {
   SKU_CODE_EXISTS(7001, "SKU code already exists", HttpStatus.BAD_REQUEST),
   SKU_OUT_OF_STOCK(7002, "SKU is out of stock", HttpStatus.BAD_REQUEST),
   ATTRIBUTE_TYPE_NOT_FOUND(7003, "Attribute type not found", HttpStatus.NOT_FOUND),
+  INVALID_TRANSACTION(1035, "Invalid transaction request", HttpStatus.BAD_REQUEST),
+  PAYMENT_NOT_FOUND(1036, "Payment not found", HttpStatus.NOT_FOUND),
+  PAYMENT_LINK_CREATION_FAILED(1037, "Payment link creation failed", HttpStatus.BAD_REQUEST),
+  TRANSACTION_NOT_FOUND(1038, "Transaction not found", HttpStatus.NOT_FOUND),
+  TRANSACTION_NOT_PENDING(1039, "Transaction status not updatable", HttpStatus.BAD_REQUEST),
+  USER_BOOST_NOT_FOUND(1040, "User boost can not be found", HttpStatus.NOT_FOUND),
   ;
 
   private final int code;
