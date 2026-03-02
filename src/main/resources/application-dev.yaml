@@ -98,5 +98,4 @@ payos:
   returnUrl: ${VITE_PAYOS_FE_RETURN_URL:/return-url}
   cancelUrl: ${VITE_PAYOS_FE_CANCEL_URL:/return-url}
 payment:
-  expiration:
   minutes: ${EXPIRED_PAYMENT:2}

@@ -88,3 +88,11 @@ app:
   transaction:
     expiration:
       minutes: ${TRANSACTION_EXPIRATION_MINUTES:15}
+payos:
+  clientId: ${PAYOS_CLIENT_ID}
+  apiKey: ${PAYOS_API_KEY}
+  checksumKey: ${PAYOS_CHECKSUM_KEY}
+  returnUrl: ${VITE_PAYOS_FE_RETURN_URL}
+  cancelUrl: ${VITE_PAYOS_FE_CANCEL_URL}
+payment:
+  minutes: ${EXPIRED_PAYMENT:2}
