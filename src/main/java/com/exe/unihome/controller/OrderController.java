@@ -1,11 +1,14 @@
 package com.exe.unihome.controller;
 
+import com.exe.unihome.common.exception.AppException;
+import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.order.request.CreateOrderRequest;
 import com.exe.unihome.dto.order.request.UpdateOrderStatusRequest;
 import com.exe.unihome.dto.order.response.OrderResponse;
 import com.exe.unihome.persistence.enums.OrderStatus;
 import com.exe.unihome.service.OrderService;
+import com.exe.unihome.service.ShipmentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -40,6 +43,7 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
+    private final ShipmentService shipmentService;
 
     @PostMapping("/orders")
     @PreAuthorize("hasRole('CUSTOMER')")
@@ -109,8 +113,13 @@ public class OrderController {
     @PreAuthorize("hasRole('ADMIN') or hasRole('STAFF') or hasRole('SHIPPER')")
     @Operation(summary = "Update order status")
     public ResponseEntity<ApiResponse<OrderResponse>> updateOrderStatus(
+            Authentication authentication,
             @PathVariable UUID orderId,
             @Valid @RequestBody UpdateOrderStatusRequest request) {
+        if (isShipper(authentication)
+                && !shipmentService.isShipperAssignedToOrder(orderId, authentication.getName())) {
+            throw new AppException(ErrorCode.SHIPPER_NOT_ASSIGNED);
+        }
         OrderResponse response = orderService.updateOrderStatus(orderId, request.getStatus());
         return ResponseEntity.ok(ApiResponse.<OrderResponse>builder()
             .code(0)
@@ -138,5 +147,14 @@ public class OrderController {
         return authentication.getAuthorities().stream()
             .map(GrantedAuthority::getAuthority)
             .anyMatch(authority -> authority.equals("ROLE_ADMIN"));
+    }
+
+    private boolean isShipper(Authentication authentication) {
+        if (authentication == null) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+            .map(GrantedAuthority::getAuthority)
+            .anyMatch(authority -> authority.equals("ROLE_SHIPPER"));
     }
 }
