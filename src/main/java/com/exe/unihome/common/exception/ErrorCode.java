@@ -70,6 +70,10 @@ public enum ErrorCode {
   TRANSACTION_NOT_FOUND(1038, "Transaction not found", HttpStatus.NOT_FOUND),
   TRANSACTION_NOT_PENDING(1039, "Transaction status not updatable", HttpStatus.BAD_REQUEST),
   USER_BOOST_NOT_FOUND(1040, "User boost can not be found", HttpStatus.NOT_FOUND),
+  SHIPMENT_NOT_FOUND(8000, "Shipment not found", HttpStatus.NOT_FOUND),
+  SHIPMENT_ALREADY_EXISTS(8001, "Shipment already exists for this transaction", HttpStatus.BAD_REQUEST),
+  SHIPMENT_INVALID_SHIPPER(8002, "User is not a shipper", HttpStatus.BAD_REQUEST),
+  SHIPPER_NOT_ASSIGNED(8003, "Shipper is not assigned to this order", HttpStatus.FORBIDDEN),
   ;
 
   private final int code;
