@@ -1,5 +1,6 @@
 package com.exe.unihome.service;
 
+import com.exe.unihome.dto.payment.response.TransactionResponse;
 import com.exe.unihome.persistence.entity.payment.Transaction;
 import com.exe.unihome.persistence.enums.TransactionStatus;
 
@@ -16,9 +17,9 @@ public interface TransactionService {
    * Create a new transaction for an order
    * Initiates automatic expiration scheduling
    */
-  Transaction createOrderTransaction(UUID orderId, String paymentMethodId);
+  TransactionResponse createOrderTransaction(UUID orderId, String paymentMethodId);
 
-  Transaction createBoostTransaction(String userBoostId);
+  TransactionResponse createBoostTransaction(String userBoostId);
 
   /**
    * Confirm transaction payment

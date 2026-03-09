@@ -3,6 +3,8 @@ package com.exe.unihome.service.impl;
 import com.exe.unihome.common.exception.AppException;
 import com.exe.unihome.common.exception.ErrorCode;
 import com.exe.unihome.dto.CreatePaymentLinkRequestBody;
+import com.exe.unihome.dto.payment.response.TransactionResponse;
+import com.exe.unihome.mapper.TransactionMapper;
 import com.exe.unihome.persistence.entity.order.Order;
 import com.exe.unihome.persistence.entity.payment.Payment;
 import com.exe.unihome.persistence.entity.payment.Transaction;
@@ -55,6 +57,7 @@ public class TransactionServiceImpl implements TransactionService {
   private final PayOsOrderServiceImpl payOsService;
   private final Clock clock;
   private final UserBoostRepository userBoostRepository;
+  private final TransactionMapper mapper;
 
   @Value("${payos.returnUrl}")
   private String returnUrl;
@@ -67,7 +70,7 @@ public class TransactionServiceImpl implements TransactionService {
    */
   @Override
   @Transactional
-  public Transaction createOrderTransaction(UUID orderId, String paymentMethodId) {
+  public TransactionResponse createOrderTransaction(UUID orderId, String paymentMethodId) {
     try {
       // Fetch order and payment method
       Order order = orderRepository.findById(orderId)
@@ -98,20 +101,21 @@ public class TransactionServiceImpl implements TransactionService {
       // Create PayOS payment link for online payments
       if ("ONLINE".equals(payment.getId())) {
         createPaymentLink(savedTransaction);
+        TransactionCreatedEvent event = TransactionCreatedEvent.builder()
+          .transactionId(savedTransaction.getId())
+          .orderId(orderId)
+          .createdAt(savedTransaction.getCreatedAt())
+          .expirationTime(savedTransaction.getExpiredAt())
+          .build();
+
+        eventPublisher.publishEvent(event);
       }
 
       // Publish event to schedule automatic expiration
-      TransactionCreatedEvent event = TransactionCreatedEvent.builder()
-        .transactionId(savedTransaction.getId())
-        .orderId(orderId)
-        .createdAt(savedTransaction.getCreatedAt())
-        .expirationTime(savedTransaction.getExpiredAt())
-        .build();
 
-      eventPublisher.publishEvent(event);
       log.info("Published TransactionCreatedEvent for transaction {}", savedTransaction.getId());
-
-      return transactionRepository.save(savedTransaction);
+      transactionRepository.save(savedTransaction);
+      return mapper.toResponse(transaction);
 
     } catch (Exception e) {
       log.error("Error creating transaction for order {}: {}", orderId, e.getMessage(), e);
@@ -121,7 +125,7 @@ public class TransactionServiceImpl implements TransactionService {
 
   @Override
   @Transactional
-  public Transaction createBoostTransaction(String userBoostId) {
+  public TransactionResponse createBoostTransaction(String userBoostId) {
     try {
       // Fetch order and payment method
       UserBoost userBoost = userBoostRepository.findById(userBoostId)
@@ -158,7 +162,7 @@ public class TransactionServiceImpl implements TransactionService {
       eventPublisher.publishEvent(event);
       log.info("Published TransactionCreatedEvent for transaction {}", savedTransaction.getId());
       savedTransaction = transactionRepository.save(savedTransaction);
-      return savedTransaction;
+      return mapper.toResponse(savedTransaction);
 
     } catch (Exception e) {
       log.error("Error creating transaction for order {}: {}", userBoostId, e.getMessage(), e);
@@ -184,9 +188,9 @@ public class TransactionServiceImpl implements TransactionService {
       }
 
       // COD: không cho confirm thủ công — transaction sẽ được đóng khi shipper giao xong
-      if (transaction.getPayment() != null && "CASH".equals(transaction.getPayment().getId())) {
-        throw new AppException(ErrorCode.INVALID_TRANSACTION);
-      }
+//      if (transaction.getPayment() != null && "CASH".equals(transaction.getPayment().getId())) {
+//        throw new AppException(ErrorCode.INVALID_TRANSACTION);
+//      } ???? sao m fix code tao lam gi
 
       // Update transaction status to SUCCESS
       transaction.setStatus(TransactionStatus.SUCCESS);
@@ -196,14 +200,19 @@ public class TransactionServiceImpl implements TransactionService {
 
       // Update order status to SHIPPING
 
-      if (getOrderId(transaction) != null)
-        orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.SHIPPING);
-      else
+      if (getOrderId(transaction) != null) {
+        if (transaction.getPayment().getId().equals("ONLINE")) {
+          orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.SHIPPING);
+          eventPublisher.publishEvent(new TransactionSuccessEvent(transactionId));
+          log.info("Published TransactionSuccessEvent for transaction {}", transactionId);
+        } else
+          orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.COMPLETED);
+
+      } else
         userBoostService.updateUserBoostStatus(transaction.getUserBoost().getId(), UserBoostStatus.ACTIVE);
 
       // Publish success event to cancel scheduled expiration
-      eventPublisher.publishEvent(new TransactionSuccessEvent(transactionId));
-      log.info("Published TransactionSuccessEvent for transaction {}", transactionId);
+
 
     } catch (Exception e) {
       log.error("Error confirming transaction {}: {}", transactionId, e.getMessage(), e);
@@ -289,7 +298,7 @@ public class TransactionServiceImpl implements TransactionService {
 
     } catch (Exception e) {
       log.error("Error updating transaction {} status: {}", transactionId, e.getMessage(), e);
-      throw new RuntimeException("Failed to update transaction status", e);
+      throw new AppException(ErrorCode.INVALID_TRANSACTION);
     }
   }
 

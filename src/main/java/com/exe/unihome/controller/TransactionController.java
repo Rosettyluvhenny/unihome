@@ -1,5 +1,6 @@
 package com.exe.unihome.controller;
 
+import com.exe.unihome.common.model.ApiResponse;
 import com.exe.unihome.dto.payment.request.CancelTransactionRequest;
 import com.exe.unihome.dto.payment.request.CreateTransactionRequest;
 import com.exe.unihome.dto.payment.request.CreateUserBoostTransactionRequest;
@@ -37,41 +38,48 @@ public class TransactionController {
    */
   @PostMapping("/order")
   @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-  public ResponseEntity<TransactionResponse> createOrderTransaction(
+  public ResponseEntity<ApiResponse<TransactionResponse>> createOrderTransaction(
     @RequestBody CreateTransactionRequest request) {
     log.info("Creating transaction for order: {}", request.getOrderId());
 
     UUID orderId = UUID.fromString(request.getOrderId());
 
     // Calculate expiration time (default 15 minutes from now)
-    Transaction transaction = transactionService.createOrderTransaction(
+    TransactionResponse transaction = transactionService.createOrderTransaction(
       orderId,
       request.getPaymentMethodId()
     );
 
-    TransactionResponse response = transactionMapper.toResponse(transaction);
     log.info("Transaction created successfully: {}", transaction.getId());
 
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    return ResponseEntity.ok(
+      ApiResponse.<TransactionResponse>builder()
+        .code(200)
+        .data(transaction)
+        .build());
 
 
   }
 
   @PostMapping("/userboost")
   @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
-  public ResponseEntity<TransactionResponse> createUserBoostTransaction(
+  public ResponseEntity<ApiResponse<TransactionResponse>> createUserBoostTransaction(
     @RequestBody CreateUserBoostTransactionRequest request) {
     String userBoostId = request.getUserBoostId();
 
     // Calculate expiration time (default 15 minutes from now)
-    Transaction transaction = transactionService.createBoostTransaction(
+    TransactionResponse transaction = transactionService.createBoostTransaction(
       userBoostId
     );
 
-    TransactionResponse response = transactionMapper.toResponse(transaction);
     log.info("Transaction created successfully: {}", transaction.getId());
 
-    return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    return ResponseEntity.status(HttpStatus.CREATED).body(
+      ApiResponse.<TransactionResponse>builder()
+        .code(200)
+        .data(transaction)
+        .build()
+    );
 
   }
 
