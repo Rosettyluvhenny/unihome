@@ -7,11 +7,8 @@ import com.exe.unihome.dto.sku.request.UpdateSkuRequest;
 import com.exe.unihome.dto.sku.response.SkuResponse;
 import com.exe.unihome.mapper.FurnitureSkuMapper;
 import com.exe.unihome.persistence.entity.Furniture;
-import com.exe.unihome.persistence.entity.FurnitureAttributeType;
 import com.exe.unihome.persistence.entity.FurnitureSku;
-import com.exe.unihome.persistence.entity.SkuAttributeValue;
 import com.exe.unihome.persistence.enums.FurnitureStatus;
-import com.exe.unihome.persistence.repository.FurnitureAttributeTypeRepository;
 import com.exe.unihome.persistence.repository.FurnitureRepository;
 import com.exe.unihome.persistence.repository.FurnitureSkuRepository;
 import com.exe.unihome.service.FurnitureSkuService;
@@ -21,7 +18,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -31,7 +27,6 @@ public class FurnitureSkuServiceImpl implements FurnitureSkuService {
 
     private final FurnitureSkuRepository skuRepository;
     private final FurnitureRepository furnitureRepository;
-    private final FurnitureAttributeTypeRepository attributeTypeRepository;
     private final FurnitureSkuMapper skuMapper;
 
     @Override
@@ -81,17 +76,8 @@ public class FurnitureSkuServiceImpl implements FurnitureSkuService {
                 .stock(request.getStock())
                 .status(status)
                 .hasDiscount(false)
+                .imageUrl(request.getImageUrl())
                 .build();
-
-        // Set attribute values
-        if (request.getAttributes() != null && !request.getAttributes().isEmpty()) {
-            attachAttributes(sku, request.getAttributes());
-        }
-
-        // Set image
-        if (request.getImageUrl() != null) {
-            sku.setImageUrl(request.getImageUrl());
-        }
 
         FurnitureSku savedSku = skuRepository.save(sku);
 
@@ -137,11 +123,6 @@ public class FurnitureSkuServiceImpl implements FurnitureSkuService {
             }
         }
 
-        if (request.getAttributes() != null) {
-            sku.getAttributeValues().clear();
-            attachAttributes(sku, request.getAttributes());
-        }
-
         if (request.getImageUrl() != null) {
             sku.setImageUrl(request.getImageUrl());
         }
@@ -173,20 +154,6 @@ public class FurnitureSkuServiceImpl implements FurnitureSkuService {
     }
 
     // ── helpers ──────────────────────────────────────────────
-
-    private void attachAttributes(FurnitureSku sku, Map<UUID, String> attributes) {
-        for (Map.Entry<UUID, String> entry : attributes.entrySet()) {
-            FurnitureAttributeType attrType = attributeTypeRepository.findById(entry.getKey())
-                    .orElseThrow(() -> new AppException(ErrorCode.ATTRIBUTE_TYPE_NOT_FOUND));
-
-            SkuAttributeValue attrValue = SkuAttributeValue.builder()
-                    .sku(sku)
-                    .attributeType(attrType)
-                    .value(entry.getValue())
-                    .build();
-            sku.getAttributeValues().add(attrValue);
-        }
-    }
 
     private void syncFurnitureStock(Furniture furniture) {
         List<FurnitureSku> allSkus = skuRepository.findByFurnitureFurnitureIdAndStatus(

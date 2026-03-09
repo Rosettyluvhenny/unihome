@@ -73,13 +73,6 @@ public class Furniture {
     @EqualsAndHashCode.Exclude
     private List<FurnitureSku> skus = new ArrayList<>();
 
-    @OneToMany(mappedBy = "furniture", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @OrderBy("displayOrder ASC")
-    @Builder.Default
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
-    private List<FurnitureAttributeType> attributeTypes = new ArrayList<>();
-
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

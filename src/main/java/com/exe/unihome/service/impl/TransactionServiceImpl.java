@@ -85,10 +85,20 @@ public class TransactionServiceImpl implements TransactionService {
         .expiredAt(LocalDateTime.now().plusMinutes(EXPIRATION_MINUTES))
         .build();
 
+      // Block duplicate transaction for same order
+      if (transactionRepository.countByOrder_OrderIdAndStatus(orderId, TransactionStatus.PENDING) > 0) {
+        throw new AppException(ErrorCode.INVALID_TRANSACTION);
+      }
+
       // Save transaction
       Transaction savedTransaction = transactionRepository.save(transaction);
       log.info("Created transaction {} for order {} with payment method {}",
         savedTransaction.getId(), orderId, paymentMethodId);
+
+      // Create PayOS payment link for online payments
+      if ("ONLINE".equals(payment.getId())) {
+        createPaymentLink(savedTransaction);
+      }
 
       // Publish event to schedule automatic expiration
       TransactionCreatedEvent event = TransactionCreatedEvent.builder()
@@ -100,9 +110,8 @@ public class TransactionServiceImpl implements TransactionService {
 
       eventPublisher.publishEvent(event);
       log.info("Published TransactionCreatedEvent for transaction {}", savedTransaction.getId());
-      savedTransaction = transactionRepository.save(transaction);
 
-      return savedTransaction;
+      return transactionRepository.save(savedTransaction);
 
     } catch (Exception e) {
       log.error("Error creating transaction for order {}: {}", orderId, e.getMessage(), e);
@@ -166,11 +175,17 @@ public class TransactionServiceImpl implements TransactionService {
   public void confirmTransaction(String transactionId) {
     try {
       Transaction transaction = transactionRepository.findByPayOsCode(transactionId)
+        .or(() -> transactionRepository.findById(transactionId))
         .orElseThrow(() -> new AppException(ErrorCode.TRANSACTION_NOT_FOUND));
 
       // Only allow confirmation if transaction is PENDING
       if (transaction.getStatus() != TransactionStatus.PENDING) {
         throw new AppException(ErrorCode.TRANSACTION_NOT_PENDING);
+      }
+
+      // COD: không cho confirm thủ công — transaction sẽ được đóng khi shipper giao xong
+      if (transaction.getPayment() != null && "CASH".equals(transaction.getPayment().getId())) {
+        throw new AppException(ErrorCode.INVALID_TRANSACTION);
       }
 
       // Update transaction status to SUCCESS
@@ -224,9 +239,10 @@ public class TransactionServiceImpl implements TransactionService {
         userBoostService.updateUserBoostStatus(transaction.getUserBoost().getId(), UserBoostStatus.CANCELLED);
 
       // Publish cancellation event
+      UUID cancelledOrderId = transaction.getOrder() != null ? transaction.getOrder().getOrderId() : null;
       TransactionCancelledEvent event = TransactionCancelledEvent.builder()
         .transactionId(transactionId)
-        .orderId(transaction.getOrder().getOrderId())
+        .orderId(cancelledOrderId)
         .timestamp(LocalDateTime.now(clock))
         .reason(reason)
         .automatic(false)  // Manual cancellation

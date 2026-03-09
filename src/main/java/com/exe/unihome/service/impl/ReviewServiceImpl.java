@@ -28,11 +28,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ReviewServiceImpl implements ReviewService {
 
-    private static final Set<OrderStatus> QUALIFIED_STATUSES = EnumSet.of(
-        OrderStatus.CONFIRMED,
-        OrderStatus.SHIPPING,
-        OrderStatus.COMPLETED
-    );
+    private static final Set<OrderStatus> QUALIFIED_STATUSES = EnumSet.of(OrderStatus.COMPLETED);
 
     private final FurnitureRepository furnitureRepository;
     private final UserRepository userRepository;

@@ -76,6 +76,9 @@ public class CartServiceImpl implements CartService {
                 });
 
         int newQuantity = item.getQuantity() + request.getQuantity();
+        if (newQuantity > sku.getStock()) {
+            throw new AppException(ErrorCode.SKU_OUT_OF_STOCK);
+        }
         item.setQuantity(newQuantity);
         item.setUnitPrice(resolveUnitPrice(sku));
         item.setLineTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
@@ -94,6 +97,9 @@ public class CartServiceImpl implements CartService {
                 .findFirst()
                 .orElseThrow(() -> new AppException(ErrorCode.CART_ITEM_NOT_FOUND));
 
+        if (item.getSku() != null && request.getQuantity() > item.getSku().getStock()) {
+            throw new AppException(ErrorCode.SKU_OUT_OF_STOCK);
+        }
         item.setQuantity(request.getQuantity());
         item.setLineTotal(item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())));
 

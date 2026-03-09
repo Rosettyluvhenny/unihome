@@ -8,8 +8,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -26,11 +24,6 @@ public class UpdateSkuRequest {
     private Integer stock;
 
     private String status;
-
-    /**
-     * Map of attributeTypeId -> value (replaces all existing attribute values).
-     */
-    private Map<UUID, String> attributes;
 
     /**
      * Image URL for this SKU variant.

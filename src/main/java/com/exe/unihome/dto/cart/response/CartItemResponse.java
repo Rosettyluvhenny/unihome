@@ -1,6 +1,5 @@
 package com.exe.unihome.dto.cart.response;
 
-import com.exe.unihome.dto.sku.response.SkuAttributeValueResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -26,7 +25,6 @@ public class CartItemResponse {
     private BigDecimal unitPrice;
     private BigDecimal lineTotal;
     private String primaryImageUrl;
-    private List<SkuAttributeValueResponse> skuAttributes;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

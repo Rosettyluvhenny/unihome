@@ -34,7 +34,7 @@ public class CartController {
     private final CartService cartService;
 
     @GetMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Get current cart")
     public ResponseEntity<ApiResponse<CartResponse>> getCart(Authentication authentication) {
         CartResponse response = cartService.getCart(authentication.getName());
@@ -46,7 +46,7 @@ public class CartController {
     }
 
     @PostMapping("/items")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Add item to cart")
     public ResponseEntity<ApiResponse<CartResponse>> addItem(
             Authentication authentication,
@@ -60,7 +60,7 @@ public class CartController {
     }
 
     @PutMapping("/items/{itemId}")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Update cart item quantity")
     public ResponseEntity<ApiResponse<CartResponse>> updateItem(
             Authentication authentication,
@@ -75,7 +75,7 @@ public class CartController {
     }
 
     @DeleteMapping("/items/{itemId}")
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Remove item from cart")
     public ResponseEntity<ApiResponse<CartResponse>> removeItem(
             Authentication authentication,
@@ -89,7 +89,7 @@ public class CartController {
     }
 
     @DeleteMapping
-    @PreAuthorize("hasRole('CUSTOMER')")
+    @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Clear cart")
     public ResponseEntity<ApiResponse<Void>> clearCart(Authentication authentication) {
         cartService.clearCart(authentication.getName());
