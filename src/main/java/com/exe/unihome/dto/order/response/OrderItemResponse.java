@@ -1,6 +1,5 @@
 package com.exe.unihome.dto.order.response;
 
-import com.exe.unihome.dto.sku.response.SkuAttributeValueResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -25,5 +24,4 @@ public class OrderItemResponse {
     private BigDecimal unitPrice;
     private BigDecimal lineTotal;
     private String primaryImageUrl;
-    private List<SkuAttributeValueResponse> skuAttributes;
 }

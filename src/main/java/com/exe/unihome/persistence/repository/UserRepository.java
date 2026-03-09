@@ -1,5 +1,6 @@
 package com.exe.unihome.persistence.repository;
 
+import com.exe.unihome.persistence.entity.identityAndAuth.RoleName;
 import com.exe.unihome.persistence.entity.identityAndAuth.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,5 +18,7 @@ public interface UserRepository extends JpaRepository<User, String> {
   boolean existsByPhone(String phone);
 
   Page<User> findByEmailContainingIgnoreCase(String email, Pageable pageable);
+
+  Page<User> findByRole(RoleName role, Pageable pageable);
 
 }

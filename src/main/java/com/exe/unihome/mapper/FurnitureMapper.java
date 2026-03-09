@@ -19,7 +19,6 @@ public interface FurnitureMapper {
     @Mapping(source = "status", target = "status")
     @Mapping(source = "images", target = "images")
     @Mapping(target = "primaryImageUrl", ignore = true)
-    @Mapping(source = "attributeTypes", target = "attributeTypes")
     @Mapping(source = "skus", target = "skus")
     FurnitureResponse toResponse(Furniture furniture);
 

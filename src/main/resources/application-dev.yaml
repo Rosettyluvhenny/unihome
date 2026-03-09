@@ -7,12 +7,12 @@ spring:
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/unihome}
     username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    password: ${DB_PASSWORD:12345}
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:12345}
+      password: ${REDIS_PASSWORD:}
       timeout: 5s
   #      host: ${REDIS_HOST:redis-19053.c252.ap-southeast-1-1.ec2.cloud.redislabs.com}
   #      port: ${REDIS_PORT:19053}

@@ -1,7 +1,6 @@
 package com.exe.unihome.mapper;
 
 import com.exe.unihome.dto.order.response.OrderItemResponse;
-import com.exe.unihome.dto.sku.response.SkuAttributeValueResponse;
 import com.exe.unihome.persistence.entity.FurnitureImage;
 import com.exe.unihome.persistence.entity.FurnitureSku;
 import com.exe.unihome.persistence.entity.order.OrderItem;
@@ -9,9 +8,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 import java.math.BigDecimal;
-import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface OrderItemMapper {
@@ -23,7 +20,6 @@ public interface OrderItemMapper {
     @Mapping(target = "skuCode", expression = "java(orderItem.getSku() != null ? orderItem.getSku().getSkuCode() : null)")
     @Mapping(target = "lineTotal", expression = "java(calculateLineTotal(orderItem))")
     @Mapping(target = "primaryImageUrl", expression = "java(resolvePrimaryImage(orderItem))")
-    @Mapping(target = "skuAttributes", expression = "java(resolveSkuAttributes(orderItem))")
     OrderItemResponse toResponse(OrderItem orderItem);
 
     default BigDecimal calculateLineTotal(OrderItem orderItem) {
@@ -52,19 +48,5 @@ public interface OrderItemMapper {
                 .map(FurnitureImage::getImageUrl)
                 .findFirst()
                 .orElse(null));
-    }
-
-    default List<SkuAttributeValueResponse> resolveSkuAttributes(OrderItem orderItem) {
-        FurnitureSku sku = orderItem.getSku();
-        if (sku == null || sku.getAttributeValues() == null) {
-            return Collections.emptyList();
-        }
-        return sku.getAttributeValues().stream()
-                .map(av -> SkuAttributeValueResponse.builder()
-                        .attributeTypeId(av.getAttributeType() != null ? av.getAttributeType().getAttributeTypeId() : null)
-                        .attributeName(av.getAttributeType() != null ? av.getAttributeType().getName() : null)
-                        .value(av.getValue())
-                        .build())
-                .toList();
     }
 }

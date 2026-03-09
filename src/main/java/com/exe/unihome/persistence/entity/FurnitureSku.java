@@ -1,7 +1,6 @@
 package com.exe.unihome.persistence.entity;
 
 import com.exe.unihome.persistence.enums.FurnitureStatus;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,7 +11,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -23,8 +21,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -72,10 +68,6 @@ public class FurnitureSku {
 
     @Column(name = "image_url", length = 1024)
     private String imageUrl;
-
-    @OneToMany(mappedBy = "sku", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<SkuAttributeValue> attributeValues = new ArrayList<>();
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

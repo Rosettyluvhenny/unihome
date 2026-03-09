@@ -1,6 +1,5 @@
 package com.exe.unihome.dto.furniture.response;
 
-import com.exe.unihome.dto.sku.response.AttributeTypeResponse;
 import com.exe.unihome.dto.sku.response.SkuResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -29,7 +28,6 @@ public class FurnitureResponse {
     private Boolean hasDiscount;
     private String primaryImageUrl;
     private List<FurnitureImageResponse> images;
-    private List<AttributeTypeResponse> attributeTypes;
     private List<SkuResponse> skus;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;

@@ -10,8 +10,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
-import java.util.Map;
-import java.util.UUID;
 
 @Data
 @Builder
@@ -31,12 +29,6 @@ public class CreateSkuRequest {
     private Integer stock;
 
     private String status;
-
-    /**
-     * Map of attributeTypeId -> value.
-     * Example: { "uuid-for-color": "Nâu", "uuid-for-size": "Queen" }
-     */
-    private Map<UUID, String> attributes;
 
     /**
      * Optional image URL for this SKU variant
