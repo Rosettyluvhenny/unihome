@@ -120,7 +120,16 @@ public class ShipmentServiceImpl implements ShipmentService {
         Transaction transaction = shipment.getTransaction();
         if (transaction != null) {
             if (status == ShipmentStatus.COMPLETED) {
-                transactionService.updateTransactionStatus(transaction.getId(), TransactionStatus.SUCCESS);
+                boolean isCod = transaction.getPayment() != null && "CASH".equals(transaction.getPayment().getId());
+                if (isCod) {
+                    // COD: transaction vẫn PENDING, confirm để thu tiền + cập nhật order → COMPLETED
+                    transactionService.confirmTransaction(transaction.getId());
+                } else {
+                    // ONLINE: transaction đã SUCCESS từ trước, chỉ cần cập nhật order → COMPLETED
+                    if (transaction.getOrder() != null) {
+                        orderService.updateOrderStatus(transaction.getOrder().getOrderId(), OrderStatus.COMPLETED);
+                    }
+                }
                 log.info("Confirmed transaction {} after shipment {} completed", transaction.getId(), shipmentId);
             } else if (status == ShipmentStatus.FAILED) {
                 transactionService.cancelTransaction(transaction.getId(), note != null ? note : "Shipment failed");
